@@ -1,0 +1,5 @@
+The following license applies to all source code and assets within this mod.
+
+Copyright 2021 The Mod Authors, All Rights Reserved.
+
+See file "CMakeLists.txt" or "ModInfo.json" for the list of copyright holders.

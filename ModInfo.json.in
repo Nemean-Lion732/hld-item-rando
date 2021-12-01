@@ -1,0 +1,11 @@
+{
+    "name": "@PROJECT_NAME@",
+    "version": "@PROJECT_VERSION@",
+    "description": "@PROJECT_DESCRIPTION@",
+    "homepage": "@PROJECT_HOMEPAGE_URL@",
+    "minimum_mre_version": "@PROJECT_MINIMUM_MRE_VERSION@",
+    "authors": [
+        "@PROJECT_AUTHORS_JSON@"
+    ],
+    "configuration": []
+}

@@ -1,0 +1,42 @@
+{
+    "mdk": {
+        "modName": "itemrando",
+        "extraModNames": [
+            // "bugcon"
+            // "greendrifter"
+        ]
+    },
+    "editor.formatOnType": false,
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": false,
+    "editor.detectIndentation": false,
+    "editor.tabSize": 4,
+    "C_Cpp.clang_format_sortIncludes": true,
+    "C_Cpp.default.compilerPath": "/usr/bin/gcc",
+    "C_Cpp.default.intelliSenseMode": "gcc-x86",
+    "C_Cpp.loggingLevel": "Warning",
+    "C_Cpp.autoAddFileAssociations": false,
+    "files.associations": {
+        "*.h": "c",
+        "*.json.in": "json",
+        "*.toml.in": "toml",
+    },
+    "[toml]": {
+        "editor.formatOnSave": false,
+    },
+    "cSpell.words": [
+        "aer",
+        "aererr",
+        "aerman",
+        "aermdk",
+        "build",
+        "cmake",
+        "dcmake",
+        "gamedir",
+        "moddef",
+        "modpack",
+        "type",
+        "randomizer",
+        "didnt"
+    ],
+}
