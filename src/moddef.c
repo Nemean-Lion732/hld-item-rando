@@ -42,28 +42,58 @@ static void checkRandomizerSpawn(randomItemInfo_t oldItem, float x, float y)
  *  @param[in] target   AERInstance pointer to the instance created
  *  @param[in] other    Unused
  * 
- *  @return Determines if the creation event is cancelled (should always returns false)
+ *  @return true / false whether the creation continues or not
  */
-static bool gearbitCreatedListener(AEREvent *event, AERInstance *target, __attribute__((unused))AERInstance *other)
+static bool gearbitCreatedListener(AEREvent *event, AERInstance *target, AERInstance *other)
 {
-    // Get information about what gearbit just spawned
-    AERLocal *pCrateID = AERInstanceGetHLDLocal(event, "crateCID");
+    // handle other listeners
+    if (!event->handle(event, target, other))
+        return false;
 
+    // We need to wait 1 tick for get the gearbit data
+
+    // Set an alarm in the next tick
+    AERInstanceSetAlarm(target, 0, 1);
+    return true;
+}
+
+static bool gearbitCrateCreatedListener(AEREvent *event, AERInstance *target, AERInstance *other)
+{
+    // handle other listeners
+    if (!event->handle(event, target, other))
+        return false;
+
+    AERInstanceChange(target, AER_OBJECT_GEARBIT, true);
+    return true;
+}
+
+static bool gearbitAlarmListener(AEREvent *event, AERInstance *target, AERInstance *other)
+{
+    // handle other listeners
+    if (!event->handle(event, target, other))
+        return false;
+
+    // Get information about what gearbit just spawned
+    AERLocal* pCrateID = AERInstanceGetHLDLocal(target, "crateCID");
+    
     if (pCrateID == NULL)
     {
         // This should never happen, we will check anyways
-        AERLogErr("Could not get crateCID from created gearbit!");
+        AERLogInfo("Could not get crateCID from created gearbit!");
         return true;
     }
+    AERLogInfo("Got Gearbit %e", pCrateID->d);
 
     float x, y;
     AERInstanceGetPosition(target, &x, &y);
 
     // Call a general handler to spawn our randomized objects
-    checkRandomizerSpawn((randomItemInfo_t){.data = {.type = ITEM_GEARBIT, .identifier = pCrateID->u}}, x, y);
+    checkRandomizerSpawn((randomItemInfo_t){.data = {.type = ITEM_GEARBIT, .identifier = (uint32_t) pCrateID->d}}, x, y);
     
+    AERLogInfo("Got Gearbit (uint) %lu", (uint32_t) pCrateID->d);
     // Now cancel the creation event, we do not want any gearbits spawning this way
-    return false;
+    AERInstanceDestroy(target);
+    return true;
 }
 
 /*!
@@ -73,8 +103,13 @@ static void registerObjectListeners()
 {
     // Replacement Listeners
     AERObjectAttachCreateListener(AER_OBJECT_GEARBIT, gearbitCreatedListener);
+    AERObjectAttachCreateListener(AER_OBJECT_GEARBITCRATE, gearbitCrateCreatedListener);
+    AERObjectAttachAlarmListener(AER_OBJECT_GEARBIT, 0, gearbitAlarmListener);
     // AERObjectAttachCreateListener(AER_OBJECT_DRIFTERBONES_WEAPON, weaponCreatedListener);
     // AERObjectAttachCreateListener(AER_OBJECT_DRIFTERBONES_KEY, keyCreatedListener);
+
+    // Crate
+    registerCrateObjectListeners();
     AERLogInfo("Object alarms registered");
     return;
 }
@@ -85,7 +120,7 @@ static void registerObjectListeners()
 static void registerObjects()
 {
     // Register each object
-    registerCrateObject();
+    registerCrateObjects();
 
     return;
 }

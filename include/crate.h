@@ -19,8 +19,9 @@ typedef union randomItemInfo_t
 
 /* ----- PUBLIC FUNCTIONS ----- */
 
-void registerCrateObject();
+void registerCrateObjects();
 void registerCrateSprites();
 bool destroyCrateListener(AEREvent* event, AERInstance* target, AERInstance* other);
+void registerCrateObjectListeners();
 void createRandomCrate(randomItemInfo_t newItem, float x, float y);
 #endif /* CRATE_H */

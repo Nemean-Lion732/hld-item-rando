@@ -10,7 +10,6 @@
 static int32_t crateSpriteIdx;
 static int32_t crateMaskIdx;
 static int32_t crateObjectIdx;
-static int32_t crateRenderDepth = 2;
 
 /* ----- PRIVATE FUNCTIONS ----- */
 
@@ -27,11 +26,12 @@ static void incrementGearBits()
     }
     // assume that we got a valid reference and the first one is good
     // increment the gearBits
-    AERInstanceGetHLDLocal(dataInst, "gearbitInventory")->u++;
+    AERInstanceGetHLDLocal(dataInst, "gearbitInventory")->d += 1;
 }
 
 static void incrementKeys()
 {
+    AERLogInfo("Incrementing Keys!");
     AERInstance* dataInst;
     size_t num = AERInstanceGetByObject(AER_OBJECT_DATA, false, 1, &dataInst);
 
@@ -43,7 +43,7 @@ static void incrementKeys()
     }
     // assume that we got a valid reference and the first one is good
     // increment the keys
-    AERInstanceGetHLDLocal(dataInst, "drifterKeyInventory")->u++;
+    AERInstanceGetHLDLocal(dataInst, "drifterKeyInventory")->d += 1;
 }
 
 /* ----- INTERNAL FUNCTIONS ----- */
@@ -54,6 +54,10 @@ void createRandomCrate(randomItemInfo_t newItem, float x, float y)
     
     // Copy over our item info for what this object will spawn on its destruction
     AERInstanceCreateModLocal(inst, "randomItemInfo", true, NULL)->u = newItem.raw;
+
+    // Set the correct render depth
+    AERInstanceSyncDepth(inst);
+    AERInstanceSetTangible(inst, true);
 }
 
 bool destroyCrateListener(AEREvent* event, AERInstance* target, AERInstance* other)
@@ -62,6 +66,7 @@ bool destroyCrateListener(AEREvent* event, AERInstance* target, AERInstance* oth
     if (!event->handle(event, target, other))
         return false;
     
+    AERLogInfo("Crate Destroy Listener!");
     // Create new instance
     randomItemInfo_t item = {.raw = AERInstanceGetModLocal(target, "randomItemInfo", true)->u};
     switch (item.data.type)
@@ -88,8 +93,13 @@ bool destroyCrateListener(AEREvent* event, AERInstance* target, AERInstance* oth
 
 void registerCrateObjects()
 {
-    crateObjectIdx = AERObjectRegister("random_crate", AER_OBJECT_MASTERCLASS, crateSpriteIdx, crateMaskIdx,
-        crateRenderDepth, true, true, false);
+    crateObjectIdx = AERObjectRegister("random_crate", AER_OBJECT_DESTRUCTABLE, crateSpriteIdx, crateMaskIdx,
+        0, true, true, false);
+}
+
+void registerCrateObjectListeners()
+{
+    AERObjectAttachDestroyListener(crateObjectIdx, destroyCrateListener);
 }
 
 void registerCrateSprites()
