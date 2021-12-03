@@ -18,6 +18,7 @@ set(PROJECT_AUTHORS # List of mod authors (optional)
 set(SRC
     src/moddef.c
     src/crate.c
+    src/logic.c
 )
 
 # Prepare mod information for inclusion in ModInfo.json.

@@ -6,13 +6,33 @@
 #include "export.h"
 
 #include "crate.h"
-
+#include "stdio.h"
 static int32_t crateSpriteIdx;
 static int32_t crateMaskIdx;
 static int32_t crateObjectIdx;
 
 /* ----- PRIVATE FUNCTIONS ----- */
 
+static void logItemText(randomItemInfo_t item)
+{
+    FILE *f;
+    f = fopen("logic.txt", "a");
+    char *typeName = "13_default_l";
+    switch (item.data.type)
+    {
+    case ITEM_GEARBIT:
+        typeName = "ITEM_GEARBIT";
+        break;
+    case ITEM_KEY:
+        typeName = "ITEM_KEY";
+        break;
+    default:
+        typeName = "ITEM_WEAPON";
+        break;
+    }
+    fprintf(f, "{.data.type = %s, .data.identifier = %u},\n", typeName, item.data.identifier);
+    fclose(f);
+}
 static void incrementGearBits()
 {
     AERInstance* dataInst;
@@ -80,6 +100,8 @@ bool destroyCrateListener(AEREvent* event, AERInstance* target, AERInstance* oth
     randomItemInfo_t oldItem = {.raw = AERInstanceGetModLocal(target, "randomItemInfo", true)->u};
     AERLogInfo("Random crate destroyed, original item: %u, identifier: %u", oldItem.data.type, oldItem.data.identifier);
 
+    // Log this item in a file
+    logItemText(oldItem);
     // TO DO: Implement randomizer logic
     randomItemInfo_t newItem = {.data.type = ITEM_WEAPON, .data.identifier = 2};
     AERLogInfo("Random crate destroyed, original item: %u, identifier: %u", newItem.data.type, newItem.data.identifier);

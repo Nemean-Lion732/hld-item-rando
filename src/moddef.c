@@ -66,23 +66,41 @@ static bool gearbitAlarmListener(AEREvent *event, AERInstance *target, AERInstan
         return false;
 
     // Get information about what gearbit just spawned
-    AERLocal* pCrateID = AERInstanceGetHLDLocal(target, "crateCID");
+    AERLocal* crateCID = AERInstanceGetHLDLocal(target, "crateCID");
     
-    if (pCrateID == NULL)
+    if (crateCID == NULL)
     {
         // This should never happen, we will check anyways
         AERLogInfo("Could not get crateCID from created gearbit!");
         return true;
     }
-    AERLogInfo("Got Gearbit %e", pCrateID->d);
+    AERLogInfo("Got Gearbit %e", crateCID->d);
+    
+    uint32_t cid = (uint32_t) crateCID->d; // round
+    // The above check will not work if the gearbit is being held by an enemy
+    // My "solution" is to try to use the spawner cid instead of the crateCID, I pray these are unique, otherwise we may need to go by room num
+    AERLocal* inEnemy = AERInstanceGetHLDLocal(target, "inEnemy");
+    if (inEnemy->d > 0)
+    {
+        // The CID is not correct, use the spawners CID
+        AERInstance* spawner = AERInstanceGetById((int32_t)inEnemy->d);
+        if (spawner == NULL)
+        {
+            // This should never happen, we will check anyways
+            AERLogInfo("Could not get spawner instance from held gearbit");
+            return true;
+        }
 
+        // Finally, use the cid
+        cid = AERInstanceGetHLDLocal(spawner, "cid")->d;
+    }
     float x, y;
     AERInstanceGetPosition(target, &x, &y);
 
     // Call a general handler to spawn our randomized objects
-    checkRandomizerSpawn((randomItemInfo_t){.data = {.type = ITEM_GEARBIT, .identifier = (uint32_t) pCrateID->d}}, x, y);
+    checkRandomizerSpawn((randomItemInfo_t){.data = {.type = ITEM_GEARBIT, .identifier = cid}}, x, y);
     
-    AERLogInfo("Got Gearbit (uint) %lu", (uint32_t) pCrateID->d);
+    AERLogInfo("Got Gearbit (uint) %lu", cid);
     // Now cancel the creation event, we do not want any gearbits spawning this way
     AERInstanceDestroy(target);
     return true;
