@@ -46,14 +46,25 @@ static void incrementKeys()
     AERInstanceGetHLDLocal(dataInst, "drifterKeyInventory")->d += 1;
 }
 
+static void newWeapon(uint32_t weaponNum)
+{
+    AERLogInfo("Creating Weapon %u", weaponNum);
+    
+    // Create a new persistent weapon instance. The location does not matter
+    AERInstance* weaponInst = AERInstanceCreate(AER_OBJECT_SECONDARY, 0, 0);
+
+    // Set the weapon type
+    AERInstanceGetHLDLocal(weaponInst, "type")->d = weaponNum;
+}
+
 /* ----- INTERNAL FUNCTIONS ----- */
-void createRandomCrate(randomItemInfo_t newItem, float x, float y)
+void createRandomCrate(randomItemInfo_t oldItem, float x, float y)
 {
     // Create new instance
     AERInstance* inst = AERInstanceCreate(crateObjectIdx, x, y);
     
     // Copy over our item info for what this object will spawn on its destruction
-    AERInstanceCreateModLocal(inst, "randomItemInfo", true, NULL)->u = newItem.raw;
+    AERInstanceCreateModLocal(inst, "randomItemInfo", true, NULL)->u = oldItem.raw;
 
     // Set the correct render depth
     AERInstanceSyncDepth(inst);
@@ -66,10 +77,15 @@ bool destroyCrateListener(AEREvent* event, AERInstance* target, AERInstance* oth
     if (!event->handle(event, target, other))
         return false;
     
-    AERLogInfo("Crate Destroy Listener!");
-    // Create new instance
-    randomItemInfo_t item = {.raw = AERInstanceGetModLocal(target, "randomItemInfo", true)->u};
-    switch (item.data.type)
+    randomItemInfo_t oldItem = {.raw = AERInstanceGetModLocal(target, "randomItemInfo", true)->u};
+    AERLogInfo("Random crate destroyed, original item: %u, identifier: %u", oldItem.data.type, oldItem.data.identifier);
+
+    // TO DO: Implement randomizer logic
+    randomItemInfo_t newItem = {.data.type = ITEM_WEAPON, .data.identifier = 2};
+    AERLogInfo("Random crate destroyed, original item: %u, identifier: %u", newItem.data.type, newItem.data.identifier);
+
+    // Create whatever item we got
+    switch (newItem.data.type)
     {
     case ITEM_GEARBIT:
         // Increment the players gearbits
@@ -80,10 +96,11 @@ bool destroyCrateListener(AEREvent* event, AERInstance* target, AERInstance* oth
         incrementKeys();
         break;
     case ITEM_WEAPON:
-        /* code */
+        // Give the player a new gun, the identifier field will contain the weapon number
+        newWeapon(newItem.data.identifier);
         break;
     default:
-        AERLogErr("Got unknown item from Random Crate, Type: 0x%u, IdentifierL 0x%u", item.data.type, item.data.identifier);
+        AERLogErr("Got unknown item from Random Crate, Type: 0x%u, IdentifierL 0x%u", newItem.data.type, newItem.data.identifier);
         break;
     }
     // Destroy this local (maybe redundant?)

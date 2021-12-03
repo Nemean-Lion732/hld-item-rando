@@ -21,18 +21,10 @@
  */
 static void checkRandomizerSpawn(randomItemInfo_t oldItem, float x, float y)
 {
-    oldItem.data.type++;
-    // Check if item was taken before
-    // DO LATER
-
-    // Swap the randomized item to the new one
-    // DO LATER
-    randomItemInfo_t newItem = {
-        .data = {.type = ITEM_KEY, .identifier = 10101010}
-    };
+    // TO DO: Implement checks to see if this crate was opened before
 
     // Spawn object
-    createRandomCrate(newItem, x, y);
+    createRandomCrate(oldItem, x, y);
 }
 
 /*!
@@ -63,7 +55,7 @@ static bool gearbitCrateCreatedListener(AEREvent *event, AERInstance *target, AE
     if (!event->handle(event, target, other))
         return false;
 
-    AERInstanceChange(target, AER_OBJECT_GEARBIT, true);
+    // TO DO: Find a way to break this box automatically to spawn a gearbit
     return true;
 }
 
