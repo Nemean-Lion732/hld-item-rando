@@ -12,12 +12,17 @@ static const randomItemInfo_t originalItems[] =
     {.data = {.type = ITEM_GEARBIT, .identifier = 8}}, // Room ID: 234
     {.data = {.type = ITEM_GEARBIT, .identifier = 72}}, // Room ID: 222 <- 8 modules
     {.data = {.type = ITEM_GEARBIT, .identifier = 148}}, // Room ID: 62
+    {.data = {.type = ITEM_GEARBIT, .identifier = 212}}, // Room ID: 148
+    {.data = {.type = ITEM_GEARBIT, .identifier = 252}}, // Room ID: 147 <- 16 keys req
+    {.data = {.type = ITEM_GEARBIT, .identifier = 284}}, // Room ID: 161
     {.data = {.type = ITEM_GEARBIT, .identifier = 339}}, // Room ID: 226
     {.data = {.type = ITEM_GEARBIT, .identifier = 524}}, // Room ID: 64
     {.data = {.type = ITEM_GEARBIT, .identifier = 526}}, // Room ID: 112 <- north gun req (8 modules)
     {.data = {.type = ITEM_GEARBIT, .identifier = 646}}, // Room ID: 185 <- chain dash req, north gun req
+    {.data = {.type = ITEM_GEARBIT, .identifier = 653}}, // Room ID: 155
     {.data = {.type = ITEM_GEARBIT, .identifier = 703}}, // Room ID: 84
     {.data = {.type = ITEM_GEARBIT, .identifier = 717}}, // Room ID: 187
+    {.data = {.type = ITEM_GEARBIT, .identifier = 717}}, // Room ID: 147
     {.data = {.type = ITEM_GEARBIT, .identifier = 808}}, // Room ID: 241
     {.data = {.type = ITEM_GEARBIT, .identifier = 834}}, // Room ID: 85
     {.data = {.type = ITEM_GEARBIT, .identifier = 910}}, // Room ID: 188
@@ -28,11 +33,13 @@ static const randomItemInfo_t originalItems[] =
     {.data = {.type = ITEM_GEARBIT, .identifier = 1224}}, // Room ID: 198 <- chain dash req
     {.data = {.type = ITEM_GEARBIT, .identifier = 1314}}, // Room ID: 211
     {.data = {.type = ITEM_GEARBIT, .identifier = 1329}}, // Room ID: 175 <- chain dash req (8 modules)
+    {.data = {.type = ITEM_GEARBIT, .identifier = 1338}}, // Room ID: 163
     {.data = {.type = ITEM_GEARBIT, .identifier = 1524}}, // Room ID: 242 <- 4 keys req
     {.data = {.type = ITEM_GEARBIT, .identifier = 1526}}, // Room ID: 229
     {.data = {.type = ITEM_GEARBIT, .identifier = 1544}}, // Room ID: 107
     {.data = {.type = ITEM_GEARBIT, .identifier = 1626}}, // Room ID: 86
     {.data = {.type = ITEM_GEARBIT, .identifier = 1729}}, // Room ID: 181
+    {.data = {.type = ITEM_GEARBIT, .identifier = 1742}}, // Room ID: 154
     {.data = {.type = ITEM_GEARBIT, .identifier = 1806}}, // Room ID: 178
     {.data = {.type = ITEM_GEARBIT, .identifier = 1847}}, // Room ID: 199 <- chain dash req (8 modules)
     {.data = {.type = ITEM_GEARBIT, .identifier = 1852}}, // Room ID: 109
@@ -46,6 +53,7 @@ static const randomItemInfo_t originalItems[] =
     {.data = {.type = ITEM_GEARBIT, .identifier = 2360}}, // Room ID: 65
     {.data = {.type = ITEM_GEARBIT, .identifier = 2391}}, // Room ID: 171
     {.data = {.type = ITEM_GEARBIT, .identifier = 2434}}, // Room ID: 85
+    {.data = {.type = ITEM_GEARBIT, .identifier = 2527}}, // Room ID: 161
     {.data = {.type = ITEM_GEARBIT, .identifier = 2563}}, // Room ID: 200 <- chain dash req (8 modules)
     {.data = {.type = ITEM_GEARBIT, .identifier = 2572}}, // Room ID: 194
     {.data = {.type = ITEM_GEARBIT, .identifier = 2698}}, // Room ID: 92
@@ -70,10 +78,13 @@ static const randomItemInfo_t originalItems[] =
     {.data = {.type = ITEM_GEARBIT, .identifier = 3364}}, // Room ID: 233
     {.data = {.type = ITEM_GEARBIT, .identifier = 3446}}, // Room ID: 117
     {.data = {.type = ITEM_GEARBIT, .identifier = 3494}}, // Room ID: 225
+    {.data = {.type = ITEM_GEARBIT, .identifier = 3525}}, // Room ID: 61 <- 12 keys req
     {.data = {.type = ITEM_GEARBIT, .identifier = 3541}}, // Room ID: 242
     {.data = {.type = ITEM_GEARBIT, .identifier = 3594}}, // Room ID: 118
     {.data = {.type = ITEM_GEARBIT, .identifier = 3596}}, // Room ID: 199 <- chain dash req (8 modules)
+    {.data = {.type = ITEM_GEARBIT, .identifier = 3615}}, // Room ID: 160
     {.data = {.type = ITEM_GEARBIT, .identifier = 3647}}, // Room ID: 183 <- 1 key required
+    {.data = {.type = ITEM_GEARBIT, .identifier = 3664}}, // Room ID: 140
     {.data = {.type = ITEM_GEARBIT, .identifier = 3815}}, // Room ID: 118
     {.data = {.type = ITEM_GEARBIT, .identifier = 3819}}, // Room ID: 106
     {.data = {.type = ITEM_GEARBIT, .identifier = 3834}}, // Room ID: 98
@@ -81,6 +92,7 @@ static const randomItemInfo_t originalItems[] =
     {.data = {.type = ITEM_GEARBIT, .identifier = 3969}}, // Room ID: 178
     {.data = {.type = ITEM_GEARBIT, .identifier = 3972}}, // Room ID: 96
     {.data = {.type = ITEM_GEARBIT, .identifier = 3981}}, // Room ID: 93 <- north gun req
+    {.data = {.type = ITEM_GEARBIT, .identifier = 3993}}, // Room ID: 160
     {.data = {.type = ITEM_GEARBIT, .identifier = 4000}}, // Room ID: 92
     {.data = {.type = ITEM_GEARBIT, .identifier = 4059}}, // Room ID: 119
     {.data = {.type = ITEM_GEARBIT, .identifier = 4060}}, // Room ID: 227
@@ -92,30 +104,43 @@ static const randomItemInfo_t originalItems[] =
     {.data = {.type = ITEM_GEARBIT, .identifier = 4386}}, // Room ID: 53
     {.data = {.type = ITEM_GEARBIT, .identifier = 4511}}, // Room ID: 193
     {.data = {.type = ITEM_GEARBIT, .identifier = 4551}}, // Room ID: 199 <- chain dash req (8 modules)
+    {.data = {.type = ITEM_GEARBIT, .identifier = 4759}}, // Room ID: 154
     {.data = {.type = ITEM_GEARBIT, .identifier = 4826}}, // Room ID: 90
+    {.data = {.type = ITEM_GEARBIT, .identifier = 4919}}, // Room ID: 142
     {.data = {.type = ITEM_GEARBIT, .identifier = 4969}}, // Room ID: 226
+    {.data = {.type = ITEM_GEARBIT, .identifier = 4991}}, // Room ID: 154 <- north gun req
     {.data = {.type = ITEM_GEARBIT, .identifier = 5065}}, // Room ID: 190
+    {.data = {.type = ITEM_GEARBIT, .identifier = 5130}}, // Room ID: 129
     {.data = {.type = ITEM_GEARBIT, .identifier = 5164}}, // Room ID: 112 <- north gun req (8 modules)
     {.data = {.type = ITEM_GEARBIT, .identifier = 5232}}, // Room ID: 106
     {.data = {.type = ITEM_GEARBIT, .identifier = 5276}}, // Room ID: 214
     {.data = {.type = ITEM_GEARBIT, .identifier = 5312}}, // Room ID: 93
     {.data = {.type = ITEM_GEARBIT, .identifier = 5622}}, // Room ID: 67 <- chain dash req
+    {.data = {.type = ITEM_GEARBIT, .identifier = 5778}}, // Room ID: 155
+    {.data = {.type = ITEM_GEARBIT, .identifier = 5780}}, // Room ID: 158
+    {.data = {.type = ITEM_GEARBIT, .identifier = 5807}}, // Room ID: 161
     {.data = {.type = ITEM_GEARBIT, .identifier = 5821}}, // Room ID: 185
+    {.data = {.type = ITEM_GEARBIT, .identifier = 5908}}, // Room ID: 152
     {.data = {.type = ITEM_GEARBIT, .identifier = 5916}}, // Room ID: 232 <- 12 keys req
     {.data = {.type = ITEM_GEARBIT, .identifier = 5918}}, // Room ID: 104
     {.data = {.type = ITEM_GEARBIT, .identifier = 5927}}, // Room ID: 103
+    {.data = {.type = ITEM_GEARBIT, .identifier = 5934}}, // Room ID: 162
     {.data = {.type = ITEM_GEARBIT, .identifier = 6000}}, // Room ID: 187
     {.data = {.type = ITEM_GEARBIT, .identifier = 6007}}, // Room ID: 194
     {.data = {.type = ITEM_GEARBIT, .identifier = 6014}}, // Room ID: 231
     {.data = {.type = ITEM_GEARBIT, .identifier = 6082}}, // Room ID: 182
     {.data = {.type = ITEM_GEARBIT, .identifier = 6113}}, // Room ID: 242
     {.data = {.type = ITEM_GEARBIT, .identifier = 6124}}, // Room ID: 181
+    {.data = {.type = ITEM_GEARBIT, .identifier = 6128}}, // Room ID: 63
+    {.data = {.type = ITEM_GEARBIT, .identifier = 6143}}, // Room ID: 130 <- chain dash req (8 modules)
     {.data = {.type = ITEM_GEARBIT, .identifier = 6153}}, // Room ID: 84
     {.data = {.type = ITEM_GEARBIT, .identifier = 6177}}, // Room ID: 244
     {.data = {.type = ITEM_GEARBIT, .identifier = 6231}}, // Room ID: 193 <- 3 key required
     {.data = {.type = ITEM_GEARBIT, .identifier = 6266}}, // Room ID: 183 <- 1 key required
+    {.data = {.type = ITEM_GEARBIT, .identifier = 6378}}, // Room ID: 71 <- soccer kid
     {.data = {.type = ITEM_GEARBIT, .identifier = 6387}}, // Room ID: 87 <- 10 keys req
     {.data = {.type = ITEM_GEARBIT, .identifier = 6433}}, // Room ID: 64
+    {.data = {.type = ITEM_GEARBIT, .identifier = 6477}}, // Room ID: 63
     {.data = {.type = ITEM_GEARBIT, .identifier = 6516}}, // Room ID: 239
     {.data = {.type = ITEM_GEARBIT, .identifier = 6585}}, // Room ID: 230
     {.data = {.type = ITEM_GEARBIT, .identifier = 6649}}, // Room ID: 86
@@ -124,6 +149,8 @@ static const randomItemInfo_t originalItems[] =
     {.data = {.type = ITEM_GEARBIT, .identifier = 6774}}, // Room ID: 187
     {.data = {.type = ITEM_GEARBIT, .identifier = 6788}}, // Room ID: 119
     {.data = {.type = ITEM_GEARBIT, .identifier = 6843}}, // Room ID: 246
+    {.data = {.type = ITEM_GEARBIT, .identifier = 6877}}, // Room ID: 130
+    {.data = {.type = ITEM_GEARBIT, .identifier = 7015}}, // Room ID: 139
     {.data = {.type = ITEM_GEARBIT, .identifier = 7037}}, // Room ID: 114 <- north gun req (8 modules)
     {.data = {.type = ITEM_GEARBIT, .identifier = 7096}}, // Room ID: 222  <- 8 modules
     {.data = {.type = ITEM_GEARBIT, .identifier = 7134}}, // Room ID: 226
@@ -134,11 +161,13 @@ static const randomItemInfo_t originalItems[] =
     {.data = {.type = ITEM_GEARBIT, .identifier = 7430}}, // Room ID: 113 <- north gun req (8 modules)
     {.data = {.type = ITEM_GEARBIT, .identifier = 7433}}, // Room ID: 193
     {.data = {.type = ITEM_GEARBIT, .identifier = 7455}}, // Room ID: 233
+    {.data = {.type = ITEM_GEARBIT, .identifier = 7569}}, // Room ID: 139
     {.data = {.type = ITEM_GEARBIT, .identifier = 7600}}, // Room ID: 111 <- north gun req (8 modules)
     {.data = {.type = ITEM_GEARBIT, .identifier = 7623}}, // Room ID: 172
     {.data = {.type = ITEM_GEARBIT, .identifier = 7631}}, // Room ID: 226
     {.data = {.type = ITEM_GEARBIT, .identifier = 7675}}, // Room ID: 171
     {.data = {.type = ITEM_GEARBIT, .identifier = 7692}}, // Room ID: 100
+    {.data = {.type = ITEM_GEARBIT, .identifier = 7717}}, // Room ID: 139
     {.data = {.type = ITEM_GEARBIT, .identifier = 7796}}, // Room ID: 211
     {.data = {.type = ITEM_GEARBIT, .identifier = 7840}}, // Room ID: 62
     {.data = {.type = ITEM_GEARBIT, .identifier = 7889}}, // Room ID: 188
@@ -150,6 +179,22 @@ static const randomItemInfo_t originalItems[] =
     {.data = {.type = ITEM_GEARBIT, .identifier = 4293967297}}, // Room ID: 121
     {.data = {.type = ITEM_GEARBIT, .identifier = 4293967297}}, // Room ID: 121
     {.data = {.type = ITEM_GEARBIT, .identifier = 4293967297}}, // Room ID: 121
+
+    {.data = {.type = ITEM_GEARBIT, .identifier = 4293967297}}, // Room ID: 143
+    {.data = {.type = ITEM_GEARBIT, .identifier = 4293967297}}, // Room ID: 143
+    {.data = {.type = ITEM_GEARBIT, .identifier = 4293967297}}, // Room ID: 143
+
+    {.data = {.type = ITEM_GEARBIT, .identifier = 4293967297}}, // Room ID: 150
+    {.data = {.type = ITEM_GEARBIT, .identifier = 4293967297}}, // Room ID: 150
+    {.data = {.type = ITEM_GEARBIT, .identifier = 4293967297}}, // Room ID: 150
+
+    {.data = {.type = ITEM_GEARBIT, .identifier = 4293967297}}, // Room ID: 157
+    {.data = {.type = ITEM_GEARBIT, .identifier = 4293967297}}, // Room ID: 157
+    {.data = {.type = ITEM_GEARBIT, .identifier = 4293967297}}, // Room ID: 157
+
+    {.data = {.type = ITEM_GEARBIT, .identifier = 4293967297}}, // Room ID: 164
+    {.data = {.type = ITEM_GEARBIT, .identifier = 4293967297}}, // Room ID: 164
+    {.data = {.type = ITEM_GEARBIT, .identifier = 4293967297}}, // Room ID: 164
 
     {.data = {.type = ITEM_GEARBIT, .identifier = 4293967297}}, // Room ID: 195
     {.data = {.type = ITEM_GEARBIT, .identifier = 4293967297}}, // Room ID: 195
@@ -165,9 +210,13 @@ static const randomItemInfo_t originalItems[] =
     {.data = {.type = ITEM_KEY, .identifier = 164}}, // Room ID: 100
     {.data = {.type = ITEM_KEY, .identifier = 239}}, // Room ID: 238 <- chain dash req
     {.data = {.type = ITEM_KEY, .identifier = 535}}, // Room ID: 242 242 <- 4 keys req
+    {.data = {.type = ITEM_KEY, .identifier = 941}}, // Room ID: 142
+    {.data = {.type = ITEM_KEY, .identifier = 1309}}, // Room ID: 129
+    {.data = {.type = ITEM_KEY, .identifier = 3615}}, // Room ID: 155
     {.data = {.type = ITEM_KEY, .identifier = 4401}}, // Room ID: 189
     {.data = {.type = ITEM_KEY, .identifier = 4902}}, // Room ID: 113 <- north gun req (8 modules)
     {.data = {.type = ITEM_KEY, .identifier = 4990}}, // Room ID: 229
+    {.data = {.type = ITEM_KEY, .identifier = 5016}}, // Room ID: 148
     {.data = {.type = ITEM_KEY, .identifier = 5867}}, // Room ID: 187
     {.data = {.type = ITEM_KEY, .identifier = 5886}}, // Room ID: 225 // north gun req
     {.data = {.type = ITEM_KEY, .identifier = 6662}}, // Room ID: 193
@@ -177,6 +226,7 @@ static const randomItemInfo_t originalItems[] =
     {.data = {.type = ITEM_WEAPON, .identifier = 1}}, // Room ID: 48
     {.data = {.type = ITEM_WEAPON, .identifier = 2}}, // Room ID: 245
     {.data = {.type = ITEM_WEAPON, .identifier = 21}}, // Room ID: 121
+    {.data = {.type = ITEM_WEAPON, .identifier = 23}}, // Room ID: 135 <- chain dash req (8 modules)
     {.data = {.type = ITEM_WEAPON, .identifier = 41}}, // Room ID: 200 <- chain dash req (8 modules)
     {.data = {.type = ITEM_WEAPON, .identifier = 43}}, // Room ID: 195
 };    
