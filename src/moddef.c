@@ -2,22 +2,23 @@
 #include <stdlib.h>
 #include "aer/object.h"
 #include "aer/log.h"
+#include "aer/room.h"
 #include "moddef.h"
 #include "export.h"
 
+#include "logic.h"
 #include "crate.h"
-
-#include "stdio.h"
 
 int32_t currentRoom;
 
 /* ----- PRIVATE FUNCTIONS ----- */
 
+/*
 static void logItemText(randomItemInfo_t item)
 {
     FILE *f;
     f = fopen("logic.txt", "a");
-    char *typeName = "13_default_l";
+    char *typeName = malloc(16);
     switch (item.data.type)
     {
     case ITEM_GEARBIT:
@@ -30,9 +31,11 @@ static void logItemText(randomItemInfo_t item)
         typeName = "ITEM_WEAPON";
         break;
     }
-    fprintf(f, "{.data = {.type = %s, .identifier = %u}}, // Room ID: %i\n", typeName, item.data.identifier, currentRoom);
+    fprintf(f, "{.data = {.type = %s, .identifier = %u, .room_id: %i}}\n", typeName, item.data.identifier, currentRoom);
+    free(typeName);
     fclose(f);
 }
+*/
 
 /*!
  *  @brief Determines if a randomized item should be spawned
@@ -47,9 +50,9 @@ static void logItemText(randomItemInfo_t item)
 static void checkRandomizerSpawn(randomItemInfo_t oldItem, float x, float y)
 {
     // TO DO: Implement checks to see if this crate was opened before
-    logItemText(oldItem);
+    // logItemText(oldItem);
     // Spawn object
-    // createRandomCrate(oldItem, x, y);
+    createRandomCrate(oldItem, x, y);
 }
 
 /*
@@ -86,7 +89,7 @@ static bool gearbitAlarmListener(AEREvent *event, AERInstance *target, AERInstan
 
     AERLogInfo("Got Gearbit %e", crateCID->d);
     
-    uint32_t cid = crateCID->d; // round
+    uint16_t cid = crateCID->d; // round
     // The above check will not work if the gearbit is being held by an enemy
     // My "solution" is to try to use the spawner cid instead of the crateCID, I pray these are unique, otherwise we may need to go by room num
     AERLocal* inEnemy = AERInstanceGetHLDLocal(target, "inEnemy");
@@ -108,11 +111,11 @@ static bool gearbitAlarmListener(AEREvent *event, AERInstance *target, AERInstan
     AERInstanceGetPosition(target, &x, &y);
 
     // Call a general handler to spawn our randomized objects
-    checkRandomizerSpawn((randomItemInfo_t){.data = {.type = ITEM_GEARBIT, .identifier = cid}}, x, y);
+    checkRandomizerSpawn((randomItemInfo_t){.data = {.type = ITEM_GEARBIT, .identifier = cid, .room_id = currentRoom}}, x, y);
     
     AERLogInfo("Got Gearbit (uint) %lu", cid);
     // Now cancel the creation event, we do not want any gearbits spawning this way
-    // AERInstanceDestroy(target);
+    AERInstanceDestroy(target);
     return true;
 }
 
@@ -127,10 +130,23 @@ static bool weaponAlarmListener(AEREvent *event, AERInstance *target, AERInstanc
     float x, y;
     AERInstanceGetPosition(target, &x, &y);
 
-    AERLogInfo("Got weapon (uint) %lu", (uint32_t)weapon->d);
+    AERLogInfo("Got weapon (uint) %lu", (uint16_t)weapon->d);
 
-    checkRandomizerSpawn((randomItemInfo_t){.data = {.type = ITEM_WEAPON, .identifier = weapon->d}}, x, y);
+    checkRandomizerSpawn((randomItemInfo_t){.data = {.type = ITEM_WEAPON, .identifier = weapon->d, .room_id = currentRoom}}, x, y);
 
+    AERInstanceDestroy(target);
+
+    // Do a check here to see if the player needs a map
+    if (currentRoom == AER_ROOM_IN_03_TUT_COMBAT)
+    {
+        // We are in the tutorial room. We need the drifter to be able to open the map to equip their items
+        AERInstance* data_obj;
+        if (AERInstanceGetByObject(AER_OBJECT_DATA, false, 1, &data_obj) > 0)
+            // the data instance is valid
+            AERInstanceGetHLDLocal(data_obj, "playerHasMap")->d = 1;
+        else 
+            AERLogErr("Randomizer could not equip map to player in tutorial, player is softlocked!");
+    }
 
     return true;
 }
@@ -146,10 +162,11 @@ static bool keyAlarmListener(AEREvent *event, AERInstance *target, AERInstance *
     float x, y;
     AERInstanceGetPosition(target, &x, &y);
 
-    AERLogInfo("Got key (uint) %lu", (uint32_t)cid->d);
+    AERLogInfo("Got key (uint) %lu", (uint16_t)cid->d);
 
-    checkRandomizerSpawn((randomItemInfo_t){.data = {.type = ITEM_KEY, .identifier = cid->d}}, x, y);
+    checkRandomizerSpawn((randomItemInfo_t){.data = {.type = ITEM_KEY, .identifier = cid->d, .room_id = currentRoom}}, x, y);
 
+    AERInstanceDestroy(target);
     return true;
 }
 
@@ -201,11 +218,14 @@ static void registerSprites()
 
 static void roomChangeListener(int32_t newRoomIdx, int32_t prevRoomIdx)
 {
+    // Update our local variable with the current room index
     currentRoom = newRoomIdx;
-
-    return;
 }
 
+static void constructor()
+{
+    createRandomizedIndexes();
+}
 /* ----- PUBLIC FUNCTIONS ----- */
 
 MOD_EXPORT void DefineMod(AERModDef* def) {
@@ -213,6 +233,7 @@ MOD_EXPORT void DefineMod(AERModDef* def) {
     def->registerObjects = registerObjects;
     def->registerObjectListeners = registerObjectListeners;
     def->roomStartListener = roomChangeListener;
+    def->constructor = constructor;
     
     return;
 }
