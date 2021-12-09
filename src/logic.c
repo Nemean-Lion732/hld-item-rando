@@ -1,6 +1,8 @@
-#include "aer/object.h"
 #include "aer/log.h"
-#include "aer/sprite.h"
+#include "aer/rand.h"
+#include "aer/save.h"
+#include "aer/err.h"
+#include "aer/event.h"
 
 #include <time.h>
 #include <stdlib.h>
@@ -236,48 +238,10 @@ static const randomItemInfo_t originalItems[RAND_ARRAY_SIZE] =
     {.data = {.type = ITEM_WEAPON, .identifier = 43, .room_id = 195}}
 };
 
-static const randomItemInfo_t sniperReqItems[] = 
-{
-    {.data = {.type = ITEM_GEARBIT, .identifier = 526, .room_id = 112}}, // <- north gun req (8 modules)
-    {.data = {.type = ITEM_GEARBIT, .identifier = 646, .room_id = 185}}, // <- chain dash req, north gun req
-    {.data = {.type = ITEM_GEARBIT, .identifier = 2703, .room_id = 225}}, // north gun req
-    {.data = {.type = ITEM_GEARBIT, .identifier = 3045, .room_id = 112}}, // <- north gun req (8 modules)
-    {.data = {.type = ITEM_GEARBIT, .identifier = 3357, .room_id = 113}}, // <- north gun req (8 modules)
-    {.data = {.type = ITEM_GEARBIT, .identifier = 3981, .room_id = 93}}, // <- north gun req
-    {.data = {.type = ITEM_GEARBIT, .identifier = 4991, .room_id = 154}}, // <- north gun req
-    {.data = {.type = ITEM_GEARBIT, .identifier = 5164, .room_id = 112}}, // <- north gun req (8 modules)
-    {.data = {.type = ITEM_GEARBIT, .identifier = 7037, .room_id = 114}}, // <- north gun req (8 modules)
-    {.data = {.type = ITEM_GEARBIT, .identifier = 7430, .room_id = 113}}, // <- north gun req (8 modules)
-    {.data = {.type = ITEM_GEARBIT, .identifier = 7600, .room_id = 111}}, // <- north gun req (8 modules)
-    {.data = {.type = ITEM_KEY, .identifier = 78, .room_id = 185}}, // <- chain dash req, north gun req
-    {.data = {.type = ITEM_KEY, .identifier = 4902, .room_id = 113}}, // <- north gun req (8 modules)
-    {.data = {.type = ITEM_KEY, .identifier = 5886, .room_id = 225}}, // north gun req
-};
-
-uint16_t takenItemsIndexes[RAND_ARRAY_SIZE];
+uint16_t takenItemIndexes[RAND_ARRAY_SIZE];
 uint16_t takenItemCounter = 0;
 uint16_t takenLocationIndexes[RAND_ARRAY_SIZE];
 uint16_t takenLocationCounter = 0;
-
-// This is an incredible bad randomizer algorithm, I should try finding a better one
-static void shuffleBuffer(uint16_t* buffer, uint16_t size)
-{
-    for (int i = size - 1; i > 0; i--)
-    {
-        // Get a randomized index <= i to swap the values
-        uint16_t randomized_index = rand() % (i + 1);
-        AERLogInfo("Shuffling buffer index %u with %u", i, randomized_index);
-        // store a temporary value and swap
-        uint16_t temp = buffer[i];
-        buffer[i] = buffer[randomized_index];
-        buffer[randomized_index] = temp;
-    }
-
-    for (int i = 0; i < size; i++)
-    {
-        AERLogInfo("buffer[%u] = %u", i, buffer[i]);
-    }
-}
 
 int16_t getItemIndex(randomItemInfo_t* item)
 {
@@ -322,90 +286,159 @@ static void updateIndexes(uint16_t originalIndex, uint16_t newIndex)
     randomizedIndexes[originalIndex] = newIndex;
     takenLocationIndexes[takenLocationCounter] = originalIndex;
     takenLocationCounter++;
-    takenItemsIndexes[takenItemCounter] = newIndex;
+    takenItemIndexes[takenItemCounter] = newIndex;
     takenItemCounter++;
+}
+
+static bool checkLocationNotTaken(uint16_t idx)
+{
+    for (int i = 0; i < takenLocationCounter; i++)
+    {
+        if (idx == takenLocationIndexes[i])
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool checkItemNotTaken(uint16_t idx)
+{
+    for (int i = 0; i < takenItemCounter; i++)
+    {
+        if (idx == takenItemIndexes[i])
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool isFirstWeaponLocation(uint16_t idx)
+{
+    return (randomItemInfo_t){.data = {.type = ITEM_WEAPON, .identifier = 1, .room_id = 48}}.raw == originalItems[idx].raw;
+}
+
+static bool isValidFirstWeapon(uint16_t idx)
+{
+    // Only these 4 weapons are allowed for this location
+    return originalItems[idx].raw == (randomItemInfo_t){.data = {.type = ITEM_WEAPON, .identifier = 1, .room_id = 48}}.raw
+        || originalItems[idx].raw == (randomItemInfo_t){.data = {.type = ITEM_WEAPON, .identifier = 2, .room_id = 245}}.raw
+        || originalItems[idx].raw == (randomItemInfo_t){.data = {.type = ITEM_WEAPON, .identifier = 21, .room_id = 121}}.raw
+        || originalItems[idx].raw == (randomItemInfo_t){.data = {.type = ITEM_WEAPON, .identifier = 23, .room_id = 135}}.raw;
+}
+
+static bool doesLocationNotRequireSniper(uint16_t idx)
+{
+    // we want to return true for all locations except these 14
+    return originalItems[idx].raw != (randomItemInfo_t){.data = {.type = ITEM_GEARBIT, .identifier = 526, .room_id = 112}}.raw // <- north gun req (8 modules)
+        || originalItems[idx].raw != (randomItemInfo_t){.data = {.type = ITEM_GEARBIT, .identifier = 646, .room_id = 185}}.raw // <- chain dash req, north gun req
+        || originalItems[idx].raw != (randomItemInfo_t){.data = {.type = ITEM_GEARBIT, .identifier = 2703, .room_id = 225}}.raw // north gun req
+        || originalItems[idx].raw != (randomItemInfo_t){.data = {.type = ITEM_GEARBIT, .identifier = 3045, .room_id = 112}}.raw // <- north gun req (8 modules)
+        || originalItems[idx].raw != (randomItemInfo_t){.data = {.type = ITEM_GEARBIT, .identifier = 3357, .room_id = 113}}.raw // <- north gun req (8 modules)
+        || originalItems[idx].raw != (randomItemInfo_t){.data = {.type = ITEM_GEARBIT, .identifier = 3981, .room_id = 93}}.raw // <- north gun req
+        || originalItems[idx].raw != (randomItemInfo_t){.data = {.type = ITEM_GEARBIT, .identifier = 4991, .room_id = 154}}.raw // <- north gun req
+        || originalItems[idx].raw != (randomItemInfo_t){.data = {.type = ITEM_GEARBIT, .identifier = 5164, .room_id = 112}}.raw // <- north gun req (8 modules)
+        || originalItems[idx].raw != (randomItemInfo_t){.data = {.type = ITEM_GEARBIT, .identifier = 7037, .room_id = 114}}.raw // <- north gun req (8 modules)
+        || originalItems[idx].raw != (randomItemInfo_t){.data = {.type = ITEM_GEARBIT, .identifier = 7430, .room_id = 113}}.raw // <- north gun req (8 modules)
+        || originalItems[idx].raw != (randomItemInfo_t){.data = {.type = ITEM_GEARBIT, .identifier = 7600, .room_id = 111}}.raw // <- north gun req (8 modules)
+        || originalItems[idx].raw != (randomItemInfo_t){.data = {.type = ITEM_KEY, .identifier = 78, .room_id = 185}}.raw // <- chain dash req, north gun req
+        || originalItems[idx].raw != (randomItemInfo_t){.data = {.type = ITEM_KEY, .identifier = 4902, .room_id = 113}}.raw // <- north gun req (8 modules)
+        || originalItems[idx].raw != (randomItemInfo_t){.data = {.type = ITEM_KEY, .identifier = 5886, .room_id = 225}}.raw; // north gun req
+}
+
+static bool isWeaponSniper(uint16_t idx)
+{
+    // These two weapons can open sniper nodes
+    return originalItems[idx].raw == (randomItemInfo_t){.data = {.type = ITEM_WEAPON, .identifier = 21, .room_id = 121}}.raw
+        || originalItems[idx].raw == (randomItemInfo_t){.data = {.type = ITEM_WEAPON, .identifier = 23, .room_id = 135}}.raw;
+}
+
+static bool alwaysTrue(uint16_t idx)
+{
+    return true;
+}
+static void assignFromConditions(AERRandGen* gen, bool location_condition(uint16_t), bool item_condition(uint16_t))
+{
+    // Get all possible locations
+    uint16_t location_indexes[RAND_ARRAY_SIZE];
+    uint16_t location_count = 0;
+    for (int i = 0; i < RAND_ARRAY_SIZE; i++)
+    {
+        if (location_condition(i) && checkLocationNotTaken(i))
+        {
+            location_indexes[location_count] = i;
+            location_count++;
+        }
+    }
+
+    // Get all possible items
+    uint16_t item_indexes[RAND_ARRAY_SIZE];
+    uint16_t item_count = 0;
+    for (int i = 0; i < RAND_ARRAY_SIZE; i++)
+    {
+        if (item_condition(i) && checkItemNotTaken(i))
+        {
+            item_indexes[item_count] = i;
+            item_count++;
+        }
+    }
+
+    // get the smallest buffer size
+    uint16_t smallest_buffer_size = location_count < item_count ? location_count : item_count;
+
+    AERRandGenShuffle(gen, sizeof(*item_indexes), item_count, item_indexes);
+
+    for (int i = 0; i < smallest_buffer_size; i++)
+        updateIndexes(location_indexes[i], item_indexes[i]);
 }
 
 void createRandomizedIndexes()
 {
+    // Reset variables
+    takenItemCounter = 0;
+    takenLocationCounter = 0;
+
+    // Try to get Seed from save
+    uint64_t seed;
+    bool createNewSeed = false;
+    aererr = AER_TRY;
+    double seed_d = AERSaveGetDouble("seed");
+    switch (aererr) {
+        case AER_OK:
+            // Assume we got the correct seed
+            seed = *(uint64_t*)&seed_d; // cast into uint64_t
+            AERLogInfo("Retrieved Seed %lu from save!", seed);
+            break;
+        case AER_FAILED_LOOKUP:
+            createNewSeed = true;
+            break;
+        case AER_FAILED_PARSE:
+            createNewSeed = true;
+            break;
+        default:
+            AERLogErr("Getting Randomizer Seed failed unexpectedly");
+            abort();
+    }
+
+    if (createNewSeed || seed == 0)
+    {
+        seed = AERRandUInt();
+        AERSaveSetDouble("seed", *(double*)&seed);
+        AERLogInfo("Saved New Seed %lu!", seed);
+    }
+
+    AERRandGen* gen = AERRandGenNew(seed);
+
     // The basic setup is to choose pick the most restrictive items first
-    srand(time(NULL));
-    // The item in the tuturial room must be a gun (and not a shotgun)
-    uint16_t possibleGunIndexes[4] = {202, 203, 204, 205};
-    shuffleBuffer(possibleGunIndexes, 4);
-    updateIndexes(202, possibleGunIndexes[0]);
-    AERLogInfo("First gun index %u", possibleGunIndexes[0]);
-    // Get all items that require the sniper to make sure that we do not make it unobtainable
-    uint16_t possibleSniperReqIndexes[RAND_ARRAY_SIZE - 2]; // there are two snipers that will not be used
-    uint16_t i = 0; // the number of (taken) items in the above buffer
-    for (int j = 0; j < RAND_ARRAY_SIZE; j++)
-    {
-        if (j != possibleGunIndexes[0] && j != 204 && j != 205)
-        {
-            possibleSniperReqIndexes[i] = j;
-            i++;
-        }
-    }
-    shuffleBuffer(possibleSniperReqIndexes, i);
+    // Assign a valid weapon to the first slot to get past the trigger
+    assignFromConditions(gen, isFirstWeaponLocation, isValidFirstWeapon);
 
-    updateIndexes(7, possibleSniperReqIndexes[0]);
-    updateIndexes(9, possibleSniperReqIndexes[1]);
-    updateIndexes(48, possibleSniperReqIndexes[2]);
-    updateIndexes(55, possibleSniperReqIndexes[3]);
-    updateIndexes(65, possibleSniperReqIndexes[4]);
-    updateIndexes(82, possibleSniperReqIndexes[5]);
-    updateIndexes(99, possibleSniperReqIndexes[6]);
-    updateIndexes(102, possibleSniperReqIndexes[7]);
-    updateIndexes(142, possibleSniperReqIndexes[8]);
-    updateIndexes(149, possibleSniperReqIndexes[9]);
-    updateIndexes(153, possibleSniperReqIndexes[10]);
-    updateIndexes(187, possibleSniperReqIndexes[11]);
-    updateIndexes(195, possibleSniperReqIndexes[12]);
-    updateIndexes(199, possibleSniperReqIndexes[13]);
+    // Assign where the sniper weapons should go
+    assignFromConditions(gen, doesLocationNotRequireSniper, isWeaponSniper);
 
-    // fill in the remaining items
-    uint16_t remainingItemIndexes[RAND_ARRAY_SIZE - 14];
-    i = 0;
-    for (int j = 0; j < RAND_ARRAY_SIZE; j++)
-    {
-        bool indexTaken = false;
-        for (int k = 0; k < takenItemCounter; k++)
-        {
-            if (takenItemsIndexes[k] == j)
-                indexTaken = true;
-        }
+    // Assign the remaining items
+    assignFromConditions(gen, alwaysTrue, alwaysTrue);
 
-        if (!indexTaken)
-        {
-            remainingItemIndexes[i] = j;
-            i++;
-        }
-    }
-
-    shuffleBuffer(remainingItemIndexes, i);
-
-    uint16_t remainingLocationIndexes[RAND_ARRAY_SIZE - 14];
-    i = 0;
-    for (int j = 0; j < RAND_ARRAY_SIZE; j++)
-    {
-        bool indexTaken = false;
-        for (int k = 0; k < takenLocationCounter; k++)
-        {
-            if (takenLocationIndexes[k] == j)
-                indexTaken = true;
-        }
-
-        if (!indexTaken)
-        {
-            remainingLocationIndexes[i] = j;
-            i++;
-        }
-    }
-
-    AERLogInfo("Assigning %u items", i);
-    for (int j = 0; j < i; j++)
-    {
-        updateIndexes(remainingLocationIndexes[j], remainingItemIndexes[j]);
-    }
-    
+    AERRandGenFree(gen);
 }

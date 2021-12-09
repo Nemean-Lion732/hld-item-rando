@@ -139,6 +139,7 @@ static bool weaponAlarmListener(AEREvent *event, AERInstance *target, AERInstanc
     // Do a check here to see if the player needs a map
     if (currentRoom == AER_ROOM_IN_03_TUT_COMBAT)
     {
+        createRandomizedIndexes();
         // We are in the tutorial room. We need the drifter to be able to open the map to equip their items
         AERInstance* data_obj;
         if (AERInstanceGetByObject(AER_OBJECT_DATA, false, 1, &data_obj) > 0)
@@ -147,7 +148,6 @@ static bool weaponAlarmListener(AEREvent *event, AERInstance *target, AERInstanc
         else 
             AERLogErr("Randomizer could not equip map to player in tutorial, player is softlocked!");
     }
-
     return true;
 }
 
@@ -222,9 +222,9 @@ static void roomChangeListener(int32_t newRoomIdx, int32_t prevRoomIdx)
     currentRoom = newRoomIdx;
 }
 
-static void constructor()
+static void gameLoadListener(int32_t curSlotIdx)
 {
-    createRandomizedIndexes();
+    createRandomizedIndexes(curSlotIdx);
 }
 /* ----- PUBLIC FUNCTIONS ----- */
 
@@ -233,7 +233,7 @@ MOD_EXPORT void DefineMod(AERModDef* def) {
     def->registerObjects = registerObjects;
     def->registerObjectListeners = registerObjectListeners;
     def->roomStartListener = roomChangeListener;
-    def->constructor = constructor;
+    def->gameLoadListener = gameLoadListener;
     
     return;
 }
