@@ -70,6 +70,7 @@ void createRandomCrate(randomItemInfo_t oldItem, float x, float y)
     // Set the correct render depth
     AERInstanceSyncDepth(inst);
     AERInstanceSetTangible(inst, true);
+    AERInstanceSetSpriteSpeed(inst, 0.05);
 }
 
 bool destroyCrateListener(AEREvent* event, AERInstance* target, AERInstance* other)
@@ -124,6 +125,6 @@ void registerCrateObjectListeners()
 
 void registerCrateSprites()
 {
-    crateSpriteIdx = AERSpriteRegister("random_crate", "sprites/balloon/blue_inflated.png", 6, 6, 40);
-    crateMaskIdx = AERSpriteRegister("random_crate_mask", "sprites/balloon/inflated_hit_mask.png", 1, 6, 40);
+    crateSpriteIdx = AERSpriteRegister("random_crate", "sprites/rando_box.png", 8, 8, 12);
+    crateMaskIdx = AERSpriteRegister("random_crate_mask", "sprites/rando_box_hit_mask.png", 1, 8, 12);
 }
