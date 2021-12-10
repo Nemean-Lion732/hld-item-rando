@@ -55,17 +55,23 @@ static void checkRandomizerSpawn(randomItemInfo_t oldItem, float x, float y)
     createRandomCrate(oldItem, x, y);
 }
 
-/*
 static bool gearbitCrateCreatedListener(AEREvent *event, AERInstance *target, AERInstance *other)
 {
     // handle other listeners
     if (!event->handle(event, target, other))
         return false;
 
-    // TO DO: Find a way to break this box automatically to spawn a gearbit
+    // Mute the crate so no sound is heard
+    AERInstanceGetHLDLocal(target, "muteObject")->d = 1;
+
+    // Spawn a bullet in the crate to destroy it
+    float x, y;
+    AERInstanceGetPosition(target, &x, &y);
+
+    AERInstance* bullet = AERInstanceCreate(AER_OBJECT_DIAMONDBULLET, x, y);
+    AERInstanceSetMotion(bullet, 0, 0);
     return true;
 }
-*/
 
 static bool itemCreatedListener(AEREvent *event, AERInstance *target, AERInstance *other)
 {
@@ -186,7 +192,7 @@ static void registerObjectListeners()
     AERObjectAttachCreateListener(AER_OBJECT_DRIFTERBONES_KEY, itemCreatedListener);
     AERObjectAttachAlarmListener(AER_OBJECT_DRIFTERBONES_KEY, 0, keyAlarmListener);
 
-    // AERObjectAttachCreateListener(AER_OBJECT_GEARBITCRATE, gearbitCrateCreatedListener);
+    AERObjectAttachCreateListener(AER_OBJECT_GEARBITCRATE, gearbitCrateCreatedListener);
     
     // Crate
     registerCrateObjectListeners();
