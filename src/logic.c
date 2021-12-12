@@ -1,18 +1,22 @@
+/*!
+ *  @file logic.c
+ *
+ *  Contains functions used for randomizing the items in HLD without softlocking items or duplication
+ */
 #include "aer/log.h"
 #include "aer/rand.h"
 #include "aer/save.h"
 #include "aer/err.h"
 #include "aer/event.h"
 
-#include <time.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include "export.h"
 
 #include "logic.h"
 #include "crate.h"
 
-#define RAND_MAP_SIZE 208
-uint16_t randomizedIndexes[RAND_MAP_SIZE] = {0};
+size_t randomizedIndexes[RAND_MAP_SIZE] = {0};
 static const randomItemInfo_t randomItemOrderedMap[RAND_MAP_SIZE] = 
 {
     /*      GEARBITS       */
@@ -230,10 +234,9 @@ static const randomItemInfo_t randomItemOrderedMap[RAND_MAP_SIZE] =
     {.data = {.type = ITEM_WEAPON, .identifier = 2, .room_id = 245}}
 };
 
-uint16_t takenItemIndexes[RAND_MAP_SIZE];
-uint16_t takenItemCounter = 0;
-uint16_t takenLocationIndexes[RAND_MAP_SIZE];
-uint16_t takenLocationCounter = 0;
+size_t takenItemIndexes[RAND_MAP_SIZE];
+size_t takenCounter = 0;
+size_t takenLocationIndexes[RAND_MAP_SIZE];
 
 /*!
  *  Function will abort if the given input map is not ordered
@@ -243,7 +246,7 @@ static void ensureMapOrdered()
     uint64_t lastItem = randomItemOrderedMap[0].raw;
     uint64_t nextItem;
 
-    for (int i = 1; i < RAND_MAP_SIZE; i++)
+    for (size_t i = 1; i < RAND_MAP_SIZE; i++)
     {
         nextItem = randomItemOrderedMap[i].raw;
 
@@ -253,74 +256,74 @@ static void ensureMapOrdered()
         lastItem = nextItem;
     }
 }
-/*!
- *  @brief Determines if a randomized item should be spawned
- *
- *  @param[in] type     original item category (ex. ITEM_GEARBIT)
- *  @param[in] itemID   original item number (ex. crateCID) 
- *  @param[in] x        x Coordinate to spawn randomized item
- *  @param[in] y        y Coordinate to spawn randomized item
- * 
- *  @return Determines if the creation event is cancelled (should always returns false)
- */
-void checkRandomizerSpawn(randomItemInfo_t oldItem, float x, float y)
-{
-    // TO DO: Implement checks to see if this crate was opened before
-    // logItemText(oldItem);
-    // Spawn object
-    createRandomCrate(oldItem, x, y);
-}
 
+/*!
+ *  Gets the item index in the ordered map from the item information
+ *
+ *  @param[in] item         pointer to a struct containing the item information
+ * 
+ *  @return the item index for the given item, or -1 if it is not in the map
+ */
 int16_t getItemIndex(randomItemInfo_t* item)
 {
     // Binary search
-    uint16_t lower = 0;
-    uint16_t upper = RAND_MAP_SIZE;
-    uint16_t mid;
+    size_t lower = 0;
+    size_t upper = RAND_MAP_SIZE;
+    size_t mid;
     do {
         mid = (lower + upper) / 2;
-        
-        if (randomItemOrderedMap[mid].raw > item->raw)
-            upper = mid;
-        else if (randomItemOrderedMap[mid].raw < item->raw)
-            lower = mid;
-        
+
         if (randomItemOrderedMap[mid].raw == item->raw)
             return mid;
-        
-    } while (lower < upper);
+        else if (randomItemOrderedMap[mid].raw > item->raw)
+            upper = mid;
+        else if (randomItemOrderedMap[mid].raw < item->raw)
+            lower = mid + 1;
+    } while (lower <= upper);
     // if this exits, that item does not exist in our list
 
     return -1;
 }
 
-bool updateRandomItem(randomItemInfo_t* item)
+/*!
+ *  Returns the new randomized item information from an old item index
+ */
+randomItemInfo_t updateRandomItem(int32_t oldItemIdx)
 {
-    // get the item index
-    int16_t index = getItemIndex(item);
-    if (index < 0)
-        return false;
+    // Basic check avoid errors
+    if (oldItemIdx < 0 || oldItemIdx >= RAND_MAP_SIZE)
+    {
+        AERLogErr("Got item with an invalid index (%u)! Aborting...", oldItemIdx);
+        abort();
+    } 
     
-    // put the code to save the item data here
-
-    // update the returned item
-    uint16_t newIndex = randomizedIndexes[index];
-    *item = randomItemOrderedMap[newIndex];
-    return true;
+    int32_t newIndex = randomizedIndexes[oldItemIdx];
+    return randomItemOrderedMap[newIndex];
 }
 
-static void updateIndexes(uint16_t originalIndex, uint16_t newIndex)
+/*!
+ *  @brief Updates the item mapping
+ *
+ *  @param[in] originalIndex    The original item index (or location)
+ *  @param[in] newIndex         Index of the item which will appear at this location
+ */
+static void updateIndexes(size_t originalIndex, size_t newIndex)
 {
     randomizedIndexes[originalIndex] = newIndex;
-    takenLocationIndexes[takenLocationCounter] = originalIndex;
-    takenLocationCounter++;
-    takenItemIndexes[takenItemCounter] = newIndex;
-    takenItemCounter++;
+    takenLocationIndexes[takenCounter] = originalIndex;
+    takenItemIndexes[takenCounter] = newIndex;
+    takenCounter++;
 }
 
-static bool checkLocationNotTaken(uint16_t idx)
+/*!
+ *  @brief Checks if a location already has an item
+ *
+ *  @param[in] idx      the index of the location to check
+ *  @return false if location already has item, true if it is empty
+ */
+static bool checkLocationNotTaken(size_t idx)
 {
-    for (int i = 0; i < takenLocationCounter; i++)
+    for (size_t i = 0; i < takenCounter; i++)
     {
         if (idx == takenLocationIndexes[i])
         {
@@ -330,9 +333,15 @@ static bool checkLocationNotTaken(uint16_t idx)
     return true;
 }
 
-static bool checkItemNotTaken(uint16_t idx)
+/*!
+ *  @brief Checks if this item is already at a location
+ *
+ *  @param[in] idx      the index of the item to check
+ *  @return false if item already has location, otherwise true
+ */
+static bool checkItemNotTaken(size_t idx)
 {
-    for (int i = 0; i < takenItemCounter; i++)
+    for (size_t i = 0; i < takenCounter; i++)
     {
         if (idx == takenItemIndexes[i])
         {
@@ -342,12 +351,24 @@ static bool checkItemNotTaken(uint16_t idx)
     return true;
 }
 
-static bool isFirstWeaponLocation(uint16_t idx)
+/*!
+ *  @brief Check if this is the first weapon location
+ *
+ *  @param[in] idx      the index of the location to check
+ *  @return true if this is the first weapon location, otherwise false
+ */
+static bool isFirstWeaponLocation(size_t idx)
 {
     return (randomItemInfo_t){.data = {.type = ITEM_WEAPON, .identifier = 1, .room_id = 48}}.raw == randomItemOrderedMap[idx].raw;
 }
 
-static bool isValidFirstWeapon(uint16_t idx)
+/*!
+ *  @brief Check if the given item is valid for the first weapon location
+ *
+ *  @param[in] idx      the index of the item to check
+ *  @return true if we can place this item here, false otherwise
+ */
+static bool isValidFirstWeapon(size_t idx)
 {
     // Only these 4 weapons are allowed for this location
     return randomItemOrderedMap[idx].raw == (randomItemInfo_t){.data = {.type = ITEM_WEAPON, .identifier = 1, .room_id = 48}}.raw
@@ -356,7 +377,13 @@ static bool isValidFirstWeapon(uint16_t idx)
         || randomItemOrderedMap[idx].raw == (randomItemInfo_t){.data = {.type = ITEM_WEAPON, .identifier = 23, .room_id = 135}}.raw;
 }
 
-static bool doesLocationNotRequireSniper(uint16_t idx)
+/*!
+ *  @brief Check if this location does not needs a sniper to get access
+ *
+ *  @param[in] idx      the index of the location to check
+ *  @return true if this location needs a sniper, false otherwise
+ */
+static bool doesLocationNotRequireSniper(size_t idx)
 {
     // we want to return true for all locations except these 14
     return randomItemOrderedMap[idx].raw != (randomItemInfo_t){.data = {.type = ITEM_GEARBIT, .identifier = 526, .room_id = 112}}.raw // <- north gun req (8 modules)
@@ -375,23 +402,43 @@ static bool doesLocationNotRequireSniper(uint16_t idx)
         || randomItemOrderedMap[idx].raw != (randomItemInfo_t){.data = {.type = ITEM_KEY, .identifier = 5886, .room_id = 225}}.raw; // north gun req
 }
 
-static bool isWeaponSniper(uint16_t idx)
+/*!
+ *  @brief Check if the item is a sniper weapon
+ *
+ *  @param[in] idx      the index of the item to check
+ *  @return true if the item is a sniper, false otherwise
+ */
+static bool isWeaponSniper(size_t idx)
 {
     // These two weapons can open sniper nodes
     return randomItemOrderedMap[idx].raw == (randomItemInfo_t){.data = {.type = ITEM_WEAPON, .identifier = 21, .room_id = 121}}.raw
         || randomItemOrderedMap[idx].raw == (randomItemInfo_t){.data = {.type = ITEM_WEAPON, .identifier = 23, .room_id = 135}}.raw;
 }
 
-static bool alwaysTrue(uint16_t idx)
+/*!
+ *  @brief A function which returns true no matter the input
+ *
+ *  @param[in] idx      unused
+ *  @return true
+ */
+static bool alwaysTrue(__attribute__((unused)) size_t idx)
 {
     return true;
 }
-static void assignFromConditions(AERRandGen* gen, bool location_condition(uint16_t), bool item_condition(uint16_t))
+
+/*!
+ *  @brief Assigns randomized items according to the two passed arguments
+ *
+ *  @param[in] gen                  AERRandGen pointer to be used for randomization
+ *  @param[in] location_condition   Function pointer to a function that checks location conditions
+ *  @param[in] item_condition       Function pointer to a function that checks item conditions
+ */
+static void assignFromConditions(AERRandGen* gen, bool (*location_condition)(size_t), bool (*item_condition)(size_t))
 {
     // Get all possible locations
-    uint16_t location_indexes[RAND_MAP_SIZE];
-    uint16_t location_count = 0;
-    for (int i = 0; i < RAND_MAP_SIZE; i++)
+    size_t location_indexes[RAND_MAP_SIZE];
+    size_t location_count = 0;
+    for (size_t i = 0; i < RAND_MAP_SIZE; i++)
     {
         if (location_condition(i) && checkLocationNotTaken(i))
         {
@@ -401,9 +448,9 @@ static void assignFromConditions(AERRandGen* gen, bool location_condition(uint16
     }
 
     // Get all possible items
-    uint16_t item_indexes[RAND_MAP_SIZE];
-    uint16_t item_count = 0;
-    for (int i = 0; i < RAND_MAP_SIZE; i++)
+    size_t item_indexes[RAND_MAP_SIZE];
+    size_t item_count = 0;
+    for (size_t i = 0; i < RAND_MAP_SIZE; i++)
     {
         if (item_condition(i) && checkItemNotTaken(i))
         {
@@ -413,48 +460,69 @@ static void assignFromConditions(AERRandGen* gen, bool location_condition(uint16
     }
 
     // get the smallest buffer size
-    uint16_t smallest_buffer_size = location_count < item_count ? location_count : item_count;
+    size_t smallest_buffer_size = location_count < item_count ? location_count : item_count;
 
     AERRandGenShuffle(gen, sizeof(*item_indexes), item_count, item_indexes);
 
-    for (int i = 0; i < smallest_buffer_size; i++)
+    for (size_t i = 0; i < smallest_buffer_size; i++)
         updateIndexes(location_indexes[i], item_indexes[i]);
 }
 
+/*!
+ *  @brief Loads item randomization table from save file, or creates a new one
+ */
 void createRandomizedIndexes()
 {
     // Reset variables
-    takenItemCounter = 0;
-    takenLocationCounter = 0;
+    takenCounter = 0;
+    
     ensureMapOrdered();
 
     // Try to get Seed from save
     uint64_t seed;
+
+    // The AERDouble saving method will use a standard printf %f to text file that is base64 encoded
+    // This means that it is not safe to use all 64 bits for saving data
+    // Doubles can store uint32 numbers inside without any loss so we are using that to store larger data
+    // Memory is aligned to 4 byte chunks, meaning that seed32[0] points to the first 4 bytes of seed, seed[1] points to the second 4 bytes
+    uint32_t* seed32 = (uint32_t*)&seed;
     bool createNewSeed = false;
-    aererr = AER_TRY;
-    double seed_d = AERSaveGetDouble("seed");
-    switch (aererr) {
-        case AER_OK:
-            // Assume we got the correct seed
-            seed = *(uint64_t*)&seed_d; // cast into uint64_t
-            AERLogInfo("Retrieved Seed %lu from save!", seed);
-            break;
-        case AER_FAILED_LOOKUP:
-            createNewSeed = true;
-            break;
-        case AER_FAILED_PARSE:
-            createNewSeed = true;
-            break;
-        default:
-            AERLogErr("Getting Randomizer Seed failed unexpectedly");
-            abort();
+    char key[] = "seedX";
+    for (size_t i = 0; i < 2; i++) // interate twice since sizeof(uint64_t)/sizeof(uint32_t) = 2
+    {
+        sprintf(key, "seed%u", i);
+        aererr = AER_TRY;
+        double seed_d = AERSaveGetDouble(key);
+        switch (aererr) {
+            case AER_OK:
+                // Assume we got the correct seed
+                seed32[i] = seed_d;
+                break;
+            case AER_FAILED_LOOKUP:
+                createNewSeed = true;
+                break;
+            case AER_FAILED_PARSE:
+                createNewSeed = true;
+                break;
+            default:
+                AERLogErr("Getting Randomizer Seed failed unexpectedly");
+                abort();
+        }
     }
 
-    if (createNewSeed || seed == 0)
+    if (createNewSeed)
     {
         seed = AERRandUInt();
-        AERSaveSetDouble("seed", *(double*)&seed);
+        for (size_t i = 0; i < 2; i++)
+        {
+            sprintf(key, "seed%u", i);
+            AERSaveSetDouble(key, seed32[i]);
+        }
         AERLogInfo("Saved New Seed %lu!", seed);
+    }
+    else 
+    {
+        AERLogInfo("Retrieved Seed %llu from save!", seed);
     }
 
     AERRandGen* gen = AERRandGenNew(seed);

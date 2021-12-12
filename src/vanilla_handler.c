@@ -9,60 +9,10 @@
 #include "aer/log.h"
 #include "aer/room.h"
 
+#include "primitive.h"
 #include "logic.h"
 #include "crate.h"
 #include <stdlib.h>
-
-typedef enum PrimitiveType {
-    PRIMITIVE_REAL = 0x0,
-    PRIMITIVE_STRING = 0x1,
-    PRIMITIVE_ARRAY = 0x2,
-    PRIMITIVE_PTR = 0x3,
-    PRIMITIVE_VEC3 = 0x4,
-    PRIMITIVE_UNDEFINED = 0x5,
-    PRIMITIVE_OBJECT = 0x6,
-    PRIMITIVE_INT32 = 0x7,
-    PRIMITIVE_VEC4 = 0x8,
-    PRIMITIVE_MATRIX = 0x9,
-    PRIMITIVE_INT64 = 0xA,
-    PRIMITIVE_ACCESSOR = 0xB,
-    PRIMITIVE_NULL = 0xC,
-    PRIMITIVE_BOOL = 0xD,
-    PRIMITIVE_ITERATOR = 0xE,
-} PrimitiveType;
-
-typedef struct PrimitiveString {
-    char* chars;
-    size_t refs;
-    size_t length;
-} PrimitiveString;
-
-typedef union __attribute__((aligned(4))) PrimitiveValue {
-    uint8_t raw[12];
-    double r;
-    PrimitiveString* s;
-    void* p;
-    int32_t i32;
-    int64_t i64;
-    bool b;
-} PrimitiveValue;
-
-typedef struct Primitive {
-    PrimitiveValue value;
-    PrimitiveType type;
-} Primitive;
-
-typedef struct __attribute__((aligned(4))) HLDPrimitiveArray {
-    size_t refs;
-    struct 
-    {
-        size_t size; 
-        Primitive* elements;
-    }* subArrays;
-    void* field_8;
-    uint32_t field_C;
-    size_t numSubArrays;
-} HLDPrimitiveArray;
 
 int32_t currentRoom; // copy of the current room variable (kept up to date via a listener)
 
@@ -158,23 +108,36 @@ static bool gearbitAlarmListener(AEREvent *event, AERInstance *target, AERInstan
     if (!event->handle(event, target, other))
         return false;
 
-    uint32_t identifier;
     // Get information about what gearbit just spawned
-
+    uint32_t identifier;
     Primitive* cid = (Primitive*) AERInstanceGetHLDLocal(target, "cid");
     Primitive* linkID = (Primitive*) AERInstanceGetHLDLocal(target, "linkID");
+
+    // there are multiple ways that gearbits can be spawned, determining the source
     if (linkID->type == PRIMITIVE_ARRAY)
     {
         // This gearbit is being held by an enemy (not boss)
         HLDPrimitiveArray* array = (HLDPrimitiveArray*) linkID->value.p;
-        AERLogInfo("LinkID Array size %u, elements %u, first element type %u, element value %f", 
-            array->numSubArrays, array->subArrays->size, array->subArrays->elements[0].type, array->subArrays->elements[0].value.r);
-        identifier = array->subArrays->elements[0].value.r;
+        
+        // This gets the spawner instance for this gearbit
+        AERLocal* spawner = AERInstanceGetById(array->subArrays->elements[0].value.r);
+
+        // We will use the cid for this spawner, since this is constant and unique (between spawners at least)
+        identifier = AERInstanceGetHLDLocal(spawner, "cid")->d;
     }
     else if (cid->type == PRIMITIVE_STRING)
     {
         // This gearbit was spawned by a boss
         const char* name = cid->value.s->chars;
+
+        // do a quick check that the string isnt empty
+        if (name[0] == '\0')
+        {
+            // This is the termination char, meaning our string isnt valid?
+            AERLogErr("Boss gearbit string is empty!");
+            return true;
+        }
+
         // ignore the first letter in the string, and convert directly to int
         identifier = atoi(&name[1]);
     }
@@ -188,32 +151,29 @@ static bool gearbitAlarmListener(AEREvent *event, AERInstance *target, AERInstan
     AERInstanceGetPosition(target, &x, &y);
 
     // Call a general handler to spawn our randomized objects
-    checkRandomizerSpawn((randomItemInfo_t){.data = {.type = ITEM_GEARBIT, .identifier = identifier, .room_id = currentRoom}}, x, y);
-    
-    AERLogInfo("Got Gearbit (uint) %lu", identifier);
+    checkCrateSpawn((randomItemInfo_t){.data = {.type = ITEM_GEARBIT, .identifier = identifier, .room_id = currentRoom}}, x, y);
+
     // Now cancel the creation event, we do not want any gearbits spawning this way
     AERInstanceDestroy(target);
     return true;
 }
 
+/*!
+ *  @brief Function called after a weapon skeleton is fully created. This will destroy it and update the randomizer info
+ *
+ *  @param[in] event        Type of event for which this function was called
+ *  @param[in] target       AERInstance pointer to instance of interest
+ *  @param[in] other        unused
+ * 
+ *  @return Determines if the creation event is cancelled (should always returns true)
+ */
 static bool weaponAlarmListener(AEREvent *event, AERInstance *target, AERInstance *other)
 {
     // handle other listeners
     if (!event->handle(event, target, other))
         return false;
-    
-    AERLocal* weapon = AERInstanceGetHLDLocal(target, "weapon");
-    
-    float x, y;
-    AERInstanceGetPosition(target, &x, &y);
 
-    AERLogInfo("Got weapon (uint) %lu", (uint32_t)weapon->d);
-
-    checkRandomizerSpawn((randomItemInfo_t){.data = {.type = ITEM_WEAPON, .identifier = weapon->d, .room_id = currentRoom}}, x, y);
-
-    AERInstanceDestroy(target);
-
-    // Do a check here to see if the player needs a map
+    // Check here if we need initialize our variables before we spawn in anything
     if (currentRoom == AER_ROOM_IN_03_TUT_COMBAT)
     {
         createRandomizedIndexes();
@@ -225,9 +185,28 @@ static bool weaponAlarmListener(AEREvent *event, AERInstance *target, AERInstanc
         else 
             AERLogErr("Randomizer could not equip map to player in tutorial, player is softlocked!");
     }
+
+    // get the weapon local
+    AERLocal* weapon = AERInstanceGetHLDLocal(target, "weapon");
+    float x, y;
+    AERInstanceGetPosition(target, &x, &y);
+
+    checkCrateSpawn((randomItemInfo_t){.data = {.type = ITEM_WEAPON, .identifier = weapon->d, .room_id = currentRoom}}, x, y);
+
+    AERInstanceDestroy(target);
+    
     return true;
 }
 
+/*!
+ *  @brief Function called after a key skeleton is fully created. This will destroy it and update the randomizer info
+ *
+ *  @param[in] event        Type of event for which this function was called
+ *  @param[in] target       AERInstance pointer to instance of interest
+ *  @param[in] other        unused
+ * 
+ *  @return Determines if the creation event is cancelled (should always returns true)
+ */
 static bool keyAlarmListener(AEREvent *event, AERInstance *target, AERInstance *other)
 {
     // handle other listeners
@@ -239,9 +218,10 @@ static bool keyAlarmListener(AEREvent *event, AERInstance *target, AERInstance *
     float x, y;
     AERInstanceGetPosition(target, &x, &y);
 
-    AERLogInfo("Got key (uint) %lu", (uint16_t)cid->d);
+    // get the cid local
+    AERLogInfo("Got key (uint) %lu", (uint32_t)cid->d);
 
-    checkRandomizerSpawn((randomItemInfo_t){.data = {.type = ITEM_KEY, .identifier = cid->d, .room_id = currentRoom}}, x, y);
+    checkCrateSpawn((randomItemInfo_t){.data = {.type = ITEM_KEY, .identifier = cid->d, .room_id = currentRoom}}, x, y);
 
     AERInstanceDestroy(target);
     return true;
@@ -266,7 +246,10 @@ void registerVanillaObjectListeners()
     return;
 }
 
-void roomChangeListener(int32_t newRoomIdx, int32_t prevRoomIdx)
+/*!
+ *  @brief Function to simply keep the static currentRoom variable up to date
+ */
+void vanillaRoomTracker(int32_t newRoomIdx)
 {
     // Update our local variable with the current room index
     currentRoom = newRoomIdx;

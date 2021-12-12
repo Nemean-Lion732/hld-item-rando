@@ -4,6 +4,6 @@
 /* ----- PUBLIC FUNCTIONS ----- */
 
 void registerVanillaObjectListeners();
-void roomChangeListener(int32_t newRoomIdx, int32_t prevRoomIdx);
+void vanillaRoomTracker(int32_t newRoomIdx);
 
 #endif /* VANILLA_HANDLERS_H */

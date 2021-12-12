@@ -1,6 +1,10 @@
 #ifndef LOGIC_H
 #define LOGIC_H
 
+#define RAND_MAP_SIZE 208
+
+/* ----- Data Structures ----- */
+
 typedef enum randomizedItem_e
 {
     ITEM_GEARBIT,
@@ -21,7 +25,8 @@ typedef union __attribute__((aligned(4))) randomItemInfo_t
 
 /* ----- PUBLIC FUNCTIONS ----- */
 
+int16_t getItemIndex(randomItemInfo_t* item);
 void checkRandomizerSpawn(randomItemInfo_t oldItem, float x, float y);
-bool updateRandomItem(randomItemInfo_t* item);
+randomItemInfo_t updateRandomItem(int32_t oldItemIdx);
 void createRandomizedIndexes();
 #endif

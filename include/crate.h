@@ -5,7 +5,8 @@
 
 void registerCrateObjects();
 void registerCrateSprites();
-bool destroyCrateListener(AEREvent* event, AERInstance* target, AERInstance* other);
 void registerCrateObjectListeners();
-void createRandomCrate(randomItemInfo_t newItem, float x, float y);
+void checkCrateSpawn(randomItemInfo_t newItem, float x, float y);
+void loadItemTakenFlags();
+void crateSaveEvent();
 #endif /* CRATE_H */

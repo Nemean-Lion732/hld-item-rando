@@ -1,4 +1,8 @@
-//
+/*!
+ *  @file moddef.c
+ *
+ *  Contains mod definition and breaks out all hooks in the MRE used in this mod
+ */
 #include <stdlib.h>
 #include "aer/object.h"
 #include "aer/log.h"
@@ -56,7 +60,28 @@ static void registerSprites()
 static void gameLoadListener(int32_t curSlotIdx)
 {
     createRandomizedIndexes();
+    loadItemTakenFlags();
+    return;
+}
 
+/*!
+ *  @brief This function is called upon every room transition
+ */
+static void roomChangeListener(int32_t newRoomIdx, int32_t prevRoomIdx)
+{
+    AERLogInfo("Room Change Event");
+    vanillaRoomTracker(newRoomIdx);
+
+    return;
+}
+
+/*!
+ *  @brief This function is called upon each save event
+ */
+static void gameSaveListener(int32_t curSlotIdx)
+{
+    AERLogInfo("Save Event");
+    crateSaveEvent();
     return;
 }
 
@@ -68,6 +93,7 @@ MOD_EXPORT void DefineMod(AERModDef* def) {
     def->registerObjectListeners = registerObjectListeners;
     def->roomStartListener = roomChangeListener;
     def->gameLoadListener = gameLoadListener;
-    
+    def->gameSaveListener = gameSaveListener;
+
     return;
 }
