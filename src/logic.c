@@ -239,7 +239,7 @@ size_t takenCounter = 0;
 size_t takenLocationIndexes[RAND_MAP_SIZE];
 
 /*!
- *  Function will abort if the given input map is not ordered
+ *  @brief Function will abort if the given input map is not ordered
  */
 static void ensureMapOrdered()
 {
@@ -258,7 +258,7 @@ static void ensureMapOrdered()
 }
 
 /*!
- *  Gets the item index in the ordered map from the item information
+ *  @brief Gets the item index in the ordered map from the item information
  *
  *  @param[in] item         pointer to a struct containing the item information
  * 
@@ -286,7 +286,7 @@ int16_t getItemIndex(randomItemInfo_t* item)
 }
 
 /*!
- *  Returns the new randomized item information from an old item index
+ *  @brief Returns the new randomized item information from an old item index
  */
 randomItemInfo_t updateRandomItem(int32_t oldItemIdx)
 {

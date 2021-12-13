@@ -31,7 +31,7 @@ static size_t saveBufferCounter = 0;
 /* ----- PRIVATE FUNCTIONS ----- */
 
 /*!
- *  Increases (or decreases) the players gearbit count
+ *  @brief Increases (or decreases) the players gearbit count
  */
 static void incrementGearBits(int amount)
 {
@@ -50,7 +50,7 @@ static void incrementGearBits(int amount)
 }
 
 /*!
- *  Increases (or decreases) the players key count
+ *  @brief Increases (or decreases) the players key count
  */
 static void incrementKeys(int amount)
 {
@@ -69,7 +69,7 @@ static void incrementKeys(int amount)
 }
 
 /*!
- *  Gives the player another weapon
+ *  @brief Gives the player another weapon
  *
  *  @param[in] weaponNum        the weapon's type / identifier
  */
@@ -83,7 +83,7 @@ static void newWeapon(size_t weaponNum)
 }
 
 /*!
- *  Destroy's the players weapon
+ *  @brief Destroy's the players weapon
  *
  *  @param[in] weaponNum        the weapon's type / identifier
  */
@@ -101,7 +101,7 @@ static void deleteWeapon(size_t weaponNum)
 }
 
 /*!
- *  Checks if the player has picked up this item before
+ *  @brief Checks if the player has picked up this item before
  *
  *  @param[in] oldItemIdx        index of the old item in the ordered map
  * 
@@ -125,7 +125,7 @@ static bool checkItemTakenFlag(uint32_t oldItemIdx)
 }
 
 /*!
- *  Sets a flag to tell the game that the flag has been taken
+ *  @brief Sets a flag to tell the game that the flag has been taken
  *
  *  @param[in] oldItemIdx        index of the old item in the ordered map
  */
@@ -236,7 +236,7 @@ static bool charDestroyListener(AEREvent *event, AERInstance *target, AERInstanc
 /* ----- INTERNAL FUNCTIONS ----- */
 
 /*!
- *  Loads the flags for whether each item was taken from the save file
+ *  @brief Loads the flags for whether each item was taken from the save file
  */
 void crateLoadListener()
 {
@@ -299,7 +299,7 @@ void checkCrateSpawn(randomItemInfo_t oldItem, float x, float y)
 }
 
 /*!
- *  Registers the crate object in HLD
+ *  @brief Registers the crate object in HLD
  */
 void registerCrateObjects()
 {
@@ -317,7 +317,7 @@ void registerCrateObjectListeners()
 }
 
 /*!
- *  Registers the randomized crate sprite and hit mask
+ *  @brief Registers the randomized crate sprite and hit mask
  */
 void registerCrateSprites()
 {

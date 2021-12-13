@@ -2,7 +2,7 @@
     "mdk": {
         "modName": "itemrando",
         "extraModNames": [
-            "bugcon"
+            // "bugcon"
             // "balloons"
             // "greendrifter"
         ]
