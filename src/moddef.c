@@ -59,8 +59,8 @@ static void registerSprites()
  */
 static void gameLoadListener(int32_t curSlotIdx)
 {
-    createRandomizedIndexes();
-    loadItemTakenFlags();
+    logicGameLoadListener();
+    crateLoadListener();
     return;
 }
 
@@ -70,7 +70,7 @@ static void gameLoadListener(int32_t curSlotIdx)
 static void roomChangeListener(int32_t newRoomIdx, int32_t prevRoomIdx)
 {
     AERLogInfo("Room Change Event");
-    vanillaRoomTracker(newRoomIdx);
+    vanillaRoomListener(newRoomIdx);
 
     return;
 }
@@ -81,7 +81,7 @@ static void roomChangeListener(int32_t newRoomIdx, int32_t prevRoomIdx)
 static void gameSaveListener(int32_t curSlotIdx)
 {
     AERLogInfo("Save Event");
-    crateSaveEvent();
+    crateSaveListener();
     return;
 }
 

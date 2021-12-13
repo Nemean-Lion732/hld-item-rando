@@ -176,7 +176,8 @@ static bool weaponAlarmListener(AEREvent *event, AERInstance *target, AERInstanc
     // Check here if we need initialize our variables before we spawn in anything
     if (currentRoom == AER_ROOM_IN_03_TUT_COMBAT)
     {
-        createRandomizedIndexes();
+        // Assume the game just started
+        logicGameLoadListener();
         // We are in the tutorial room. We need the drifter to be able to open the map to equip their items
         AERInstance* data_obj;
         if (AERInstanceGetByObject(AER_OBJECT_DATA, false, 1, &data_obj) > 0)
@@ -243,13 +244,14 @@ void registerVanillaObjectListeners()
     AERObjectAttachAlarmListener(AER_OBJECT_DRIFTERBONES_KEY, 0, keyAlarmListener);
 
     AERObjectAttachCreateListener(AER_OBJECT_GEARBITCRATE, gearbitCrateCreatedListener);
+
     return;
 }
 
 /*!
  *  @brief Function to simply keep the static currentRoom variable up to date
  */
-void vanillaRoomTracker(int32_t newRoomIdx)
+void vanillaRoomListener(int32_t newRoomIdx)
 {
     // Update our local variable with the current room index
     currentRoom = newRoomIdx;

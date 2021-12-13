@@ -31,9 +31,9 @@ static size_t saveBufferCounter = 0;
 /* ----- PRIVATE FUNCTIONS ----- */
 
 /*!
- *  Gives the player another gearbit
+ *  Increases (or decreases) the players gearbit count
  */
-static void incrementGearBits()
+static void incrementGearBits(int amount)
 {
     AERInstance* dataInst;
     size_t num = AERInstanceGetByObject(AER_OBJECT_DATA, false, 1, &dataInst);
@@ -46,13 +46,13 @@ static void incrementGearBits()
     }
     // assume that we got a valid reference and the first one is good
     // increment the gearBits
-    AERInstanceGetHLDLocal(dataInst, "gearbitInventory")->d += 1;
+    AERInstanceGetHLDLocal(dataInst, "gearbitInventory")->d += amount;
 }
 
 /*!
- *  Gives the player another key
+ *  Increases (or decreases) the players key count
  */
-static void incrementKeys()
+static void incrementKeys(int amount)
 {
     AERInstance* dataInst;
     size_t num = AERInstanceGetByObject(AER_OBJECT_DATA, false, 1, &dataInst);
@@ -65,7 +65,7 @@ static void incrementKeys()
     }
     // assume that we got a valid reference and the first one is good
     // increment the keys
-    AERInstanceGetHLDLocal(dataInst, "drifterKeyInventory")->d += 1;
+    AERInstanceGetHLDLocal(dataInst, "drifterKeyInventory")->d += amount;
 }
 
 /*!
@@ -83,6 +83,24 @@ static void newWeapon(size_t weaponNum)
 }
 
 /*!
+ *  Destroy's the players weapon
+ *
+ *  @param[in] weaponNum        the weapon's type / identifier
+ */
+static void deleteWeapon(size_t weaponNum)
+{ 
+    size_t num = AERInstanceGetByObject(AER_OBJECT_SECONDARY, false, 0, NULL);
+    AERInstance** weaponArray = malloc(num * sizeof(AERInstance*));
+    AERInstanceGetByObject(AER_OBJECT_SECONDARY, false, num, weaponArray);
+
+    for (size_t i = 0; i < num; i++)
+    {
+        if (AERInstanceGetHLDLocal(weaponArray[i], "type")->d == weaponNum)
+            AERInstanceDestroy(weaponArray[i]);
+    }
+}
+
+/*!
  *  Checks if the player has picked up this item before
  *
  *  @param[in] oldItemIdx        index of the old item in the ordered map
@@ -91,11 +109,19 @@ static void newWeapon(size_t weaponNum)
  */
 static bool checkItemTakenFlag(uint32_t oldItemIdx)
 {
+    // Save File
     // Get the uint32 which this index belongs in
     uint32_t flag4byte = itemTakenFlags[oldItemIdx / 32];
 
     // Check that its specific bit is 0
-    return (flag4byte & (1 << (oldItemIdx % 32))) != 0;
+    bool saveFile = (flag4byte & (1 << (oldItemIdx % 32))) != 0;
+    bool localRoom = false;
+    for(size_t i = 0; i < saveBufferCounter; i++)
+    {
+        if (saveBuffer[i] == oldItemIdx)
+            localRoom = true;
+    }
+    return saveFile || localRoom;
 }
 
 /*!
@@ -134,11 +160,11 @@ static bool destroyCrateListener(AEREvent* event, AERInstance* target, AERInstan
     {
     case ITEM_GEARBIT:
         // Increment the players gearbits
-        incrementGearBits();
+        incrementGearBits(1);
         break;
     case ITEM_KEY:
         // Increment the players keys
-        incrementKeys();
+        incrementKeys(1);
         break;
     case ITEM_WEAPON:
         // Give the player a new gun, the identifier field will contain the weapon number
@@ -158,12 +184,61 @@ static bool destroyCrateListener(AEREvent* event, AERInstance* target, AERInstan
     return true;
 }
 
+/*!
+ *  @brief Checks if the character has died. Resets random item progress if true
+ *
+ *  @param[in] event        Type of event for which this function was called
+ *  @param[in] target       AERInstance pointer to instance of interest
+ *  @param[in] other        unused
+ * 
+ *  @return Determines if the creation event is cancelled (should always returns true)
+ */
+static bool charDestroyListener(AEREvent *event, AERInstance *target, AERInstance *other)
+{
+    // handle other listeners
+    if (!event->handle(event, target, other))
+        return false;
+    
+    if (AERInstanceGetHLDLocal(target, "hp")->d == 0){
+        // The character has died, reset the random item tracker
+        AERLogInfo("Drifter has died! Reseting flags...");
+        for (size_t i = 0; i < saveBufferCounter; i++)
+        {
+            randomItemInfo_t newItem = updateRandomItem(saveBuffer[i]);
+
+            // Remove the item we got
+            switch (newItem.data.type)
+            {
+            case ITEM_GEARBIT:
+                // Remove the players gearbits
+                incrementGearBits(-1);
+                break;
+            case ITEM_KEY:
+                // Remove the players keys
+                incrementKeys(1);
+                break;
+            case ITEM_WEAPON:
+                // Take away the weapon the player got
+                deleteWeapon(newItem.data.identifier);
+                break;
+            default:
+                AERLogErr("Got unknown item from Random Crate, Type: 0x%u, IdentifierL 0x%u", newItem.data.type, newItem.data.identifier);
+                break;
+            }
+
+        }
+        saveBufferCounter = 0;
+    }
+
+    return true;
+}
+
 /* ----- INTERNAL FUNCTIONS ----- */
 
 /*!
  *  Loads the flags for whether each item was taken from the save file
  */
-void loadItemTakenFlags()
+void crateLoadListener()
 {
     // just allocate enough memory for this
     char key[] = "takenFlagXX";
@@ -238,6 +313,7 @@ void registerCrateObjects()
 void registerCrateObjectListeners()
 {
     AERObjectAttachDestroyListener(crateObjectIdx, destroyCrateListener);
+    AERObjectAttachDestroyListener(AER_OBJECT_CHAR, charDestroyListener);
 }
 
 /*!
@@ -252,7 +328,7 @@ void registerCrateSprites()
 /*!
  *  @brief Saves the taken crate flags into the savefile
  */
-void crateSaveEvent()
+void crateSaveListener()
 {
     // Set the keys flags
     for (size_t i = 0; i < saveBufferCounter; i++)

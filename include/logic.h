@@ -25,8 +25,9 @@ typedef union __attribute__((aligned(4))) randomItemInfo_t
 
 /* ----- PUBLIC FUNCTIONS ----- */
 
+void logicGameLoadListener();
+
 int16_t getItemIndex(randomItemInfo_t* item);
-void checkRandomizerSpawn(randomItemInfo_t oldItem, float x, float y);
 randomItemInfo_t updateRandomItem(int32_t oldItemIdx);
-void createRandomizedIndexes();
+
 #endif

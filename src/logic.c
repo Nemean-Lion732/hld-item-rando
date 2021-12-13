@@ -471,7 +471,7 @@ static void assignFromConditions(AERRandGen* gen, bool (*location_condition)(siz
 /*!
  *  @brief Loads item randomization table from save file, or creates a new one
  */
-void createRandomizedIndexes()
+void logicGameLoadListener()
 {
     // Reset variables
     takenCounter = 0;

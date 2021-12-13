@@ -6,7 +6,9 @@
 void registerCrateObjects();
 void registerCrateSprites();
 void registerCrateObjectListeners();
+void crateLoadListener();
+void crateSaveListener();
+
 void checkCrateSpawn(randomItemInfo_t newItem, float x, float y);
-void loadItemTakenFlags();
-void crateSaveEvent();
+
 #endif /* CRATE_H */
