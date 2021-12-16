@@ -20,6 +20,7 @@ set(SRC
     src/crate.c
     src/logic.c
     src/vanilla_handler.c
+    src/indicator.c
 )
 
 # Prepare mod information for inclusion in ModInfo.json.

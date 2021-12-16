@@ -3,7 +3,6 @@
  *
  *  Contains mod definition and breaks out all hooks in the MRE used in this mod
  */
-#include <stdlib.h>
 #include "aer/object.h"
 #include "aer/log.h"
 #include "aer/room.h"
@@ -13,6 +12,7 @@
 #include "logic.h"
 #include "crate.h"
 #include "vanilla_handler.h"
+#include "indicator.h"
 
 /* ----- PRIVATE FUNCTIONS ----- */
 
@@ -27,6 +27,9 @@ static void registerObjectListeners()
     // Crate
     registerCrateObjectListeners();
 
+    // Indicator
+    registerIndicatorObjectListeners();
+
     return;
 }
 
@@ -37,7 +40,8 @@ static void registerObjects()
 {
     // Register each object
     registerCrateObjects();
-
+    registerIndicatorObjects();
+    
     return;
 }
 

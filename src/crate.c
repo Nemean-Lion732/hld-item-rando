@@ -17,6 +17,7 @@
 
 #include "logic.h"
 #include "crate.h"
+#include "indicator.h"
 
 #define RAND_ITEM_TAKEN_FLAGS_SIZE      RAND_MAP_SIZE / 32 + 1
 
@@ -181,6 +182,11 @@ static bool destroyCrateListener(AEREvent* event, AERInstance* target, AERInstan
 
     // Destroy this local (maybe redundant?)
     AERInstanceDeleteModLocal(target, "randomItemIdx", true);
+
+    // Create a indicator
+    float x, y;
+    AERInstanceGetPosition(target, &x, &y);
+    createPickupIndicator(newItem, x, y);
     return true;
 }
 
@@ -215,7 +221,7 @@ static bool charDestroyListener(AEREvent *event, AERInstance *target, AERInstanc
                 break;
             case ITEM_KEY:
                 // Remove the players keys
-                incrementKeys(1);
+                incrementKeys(-1);
                 break;
             case ITEM_WEAPON:
                 // Take away the weapon the player got
@@ -286,7 +292,7 @@ void checkCrateSpawn(randomItemInfo_t oldItem, float x, float y)
         return;
 
     // Create new instance
-    AERInstance* inst = AERInstanceCreate(crateObjectIdx, x, y);
+    AERInstance* inst = AERInstanceCreate(crateObjectIdx, x, y+1); // offset y by 1 to fix rendering issue (sprite is already offset to compensate)
     
     // Copy over our item info for what this object will spawn on its destruction
     AERInstanceCreateModLocal(inst, "randomItemIdx", true, NULL)->u = oldItemIdx;
@@ -294,7 +300,6 @@ void checkCrateSpawn(randomItemInfo_t oldItem, float x, float y)
 
     // Set the correct render depth
     AERInstanceSyncDepth(inst);
-    AERInstanceSetTangible(inst, true);
     AERInstanceSetSpriteSpeed(inst, 0.05);
 }
 
@@ -321,8 +326,8 @@ void registerCrateObjectListeners()
  */
 void registerCrateSprites()
 {
-    crateSpriteIdx = AERSpriteRegister("random_crate", "sprites/rando_box.png", 8, 8, 12);
-    crateMaskIdx = AERSpriteRegister("random_crate_mask", "sprites/rando_box_hit_mask.png", 1, 8, 12);
+    crateSpriteIdx = AERSpriteRegister("random_crate", "sprites/rando_box.png", 8, 8, 13);
+    crateMaskIdx = AERSpriteRegister("random_crate_mask", "sprites/rando_box_hit_mask.png", 1, 8, 13);
 }
 
 /*!
