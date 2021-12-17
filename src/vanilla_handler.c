@@ -31,6 +31,10 @@ static bool gearbitCrateCreatedListener(AEREvent *event, AERInstance *target, AE
     if (!event->handle(event, target, other))
         return false;
 
+    // Dont do anything if randomizer isnt enabled
+    if(!randomizer_enabled)
+        return true;
+
     // We cannot destroy this instance using any destroy method, since
     // this would not cause the gearbit to spawn. This probably isnt the best method
 
@@ -63,6 +67,10 @@ static bool itemCreatedListener(AEREvent *event, AERInstance *target, AERInstanc
     // handle other listeners
     if (!event->handle(event, target, other))
         return false;
+
+    // Dont set our alarm if the randomizer isnt enabled
+    if(!randomizer_enabled)
+        return true;
 
     // Set an alarm in the next tick
     AERInstanceSetAlarm(target, 0, 1);
@@ -172,20 +180,6 @@ static bool weaponAlarmListener(AEREvent *event, AERInstance *target, AERInstanc
     // handle other listeners
     if (!event->handle(event, target, other))
         return false;
-
-    // Check here if we need initialize our variables before we spawn in anything
-    if (currentRoom == AER_ROOM_IN_03_TUT_COMBAT)
-    {
-        // Assume the game just started
-        logicGameLoadListener();
-        // We are in the tutorial room. We need the drifter to be able to open the map to equip their items
-        AERInstance* data_obj;
-        if (AERInstanceGetByObject(AER_OBJECT_DATA, false, 1, &data_obj) > 0)
-            // the data instance is valid
-            AERInstanceGetHLDLocal(data_obj, "playerHasMap")->d = 1;
-        else 
-            AERLogErr("Randomizer could not equip map to player in tutorial, player is softlocked!");
-    }
 
     // get the weapon local
     AERLocal* weapon = AERInstanceGetHLDLocal(target, "weapon");

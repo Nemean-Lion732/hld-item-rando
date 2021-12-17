@@ -261,13 +261,13 @@ void crateLoadListener()
                 break;
             case AER_FAILED_LOOKUP:
                 break;
-            case AER_FAILED_PARSE:
-                break;
             default:
-                AERLogErr("Getting Randomizer Seed failed unexpectedly");
+                AERLogErr("Getting Randomizer Item Info Failed Unexpectedly");
                 abort();
         }
     }
+    // reset the save buffer counter
+    saveBufferCounter = 0;
 }
 
 /*!
@@ -335,6 +335,10 @@ void registerCrateSprites()
  */
 void crateSaveListener()
 {
+    // do nothing if randomizer is not enabled
+    if (!randomizer_enabled)
+        return;
+        
     // Set the keys flags
     for (size_t i = 0; i < saveBufferCounter; i++)
         setItemTakenFlag(saveBuffer[i]);

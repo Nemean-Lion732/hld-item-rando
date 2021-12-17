@@ -23,11 +23,16 @@ typedef union __attribute__((aligned(4))) randomItemInfo_t
     } data;
 } randomItemInfo_t;
 
+/*      ----- INTERNAL GLOBALS -----         */
+
+extern bool randomizer_enabled;
+
 /* ----- PUBLIC FUNCTIONS ----- */
 
 void logicGameLoadListener();
 
 int16_t getItemIndex(randomItemInfo_t* item);
 randomItemInfo_t updateRandomItem(int32_t oldItemIdx);
+void checkForNewGame(int32_t newRoomIdx);
 
 #endif

@@ -61,7 +61,7 @@ static void registerSprites()
  *  
  * NOTE: This function is not called upon starting a new game
  */
-static void gameLoadListener(int32_t curSlotIdx)
+static void gameLoadListener(int32_t __attribute__((unused))curSlotIdx)
 {
     logicGameLoadListener();
     crateLoadListener();
@@ -71,9 +71,9 @@ static void gameLoadListener(int32_t curSlotIdx)
 /*!
  *  @brief This function is called upon every room transition
  */
-static void roomChangeListener(int32_t newRoomIdx, int32_t prevRoomIdx)
+static void roomChangeListener(int32_t newRoomIdx, int32_t __attribute__((unused))prevRoomIdx)
 {
-    AERLogInfo("Room Change Event");
+    checkForNewGame(newRoomIdx);
     vanillaRoomListener(newRoomIdx);
 
     return;
@@ -82,9 +82,8 @@ static void roomChangeListener(int32_t newRoomIdx, int32_t prevRoomIdx)
 /*!
  *  @brief This function is called upon each save event
  */
-static void gameSaveListener(int32_t curSlotIdx)
+static void gameSaveListener(int32_t __attribute__((unused))curSlotIdx)
 {
-    AERLogInfo("Save Event");
     crateSaveListener();
     return;
 }

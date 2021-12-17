@@ -1,7 +1,7 @@
 /*!
  *  @file indicator.c
  *
- *  This file contains code for creating an indicator above the a destroyed crate
+ *  This file contains code for creating an indicator above the destroyed crate
  */
 
 #include "aer/object.h"
@@ -38,6 +38,8 @@ static bool indicatorAlarmListener(AEREvent *event, AERInstance *target, AERInst
  */
 void registerIndicatorObjects()
 {
+    // Use a depth of -999999 so this object will be displayed above all other objects
+    // This may cause some glitches with menus, could be improved in the future
     indicatorObjectIdx = AERObjectRegister("random_indicator", AER_OBJECT_MASTERCLASS, AER_SPRITE_NULL, AER_SPRITE_NULL, 
     -999999, true, false, false);
 }
@@ -59,11 +61,12 @@ void registerIndicatorObjectListeners()
  */
 void createPickupIndicator(randomItemInfo_t itemInfo, float x, float y)
 {
+    // Create two objects, one as a black background, the other as the item
+    // It seems that spawning the item first always makes it appear on top
     AERInstance* item = AERInstanceCreate(indicatorObjectIdx, x - 14, y - 40);
     AERInstance* bg = AERInstanceCreate(indicatorObjectIdx, x - 14, y - 40);
     AERInstanceSetSprite(bg, AER_SPRITE_HUDWEAPONBG);
     AERInstanceSetSpriteAlpha(bg, 0.75);
-    
     
     switch (itemInfo.data.type)
     {
@@ -82,6 +85,7 @@ void createPickupIndicator(randomItemInfo_t itemInfo, float x, float y)
         AERInstanceSetSpriteFrame(item, itemInfo.data.identifier);
         break;
     default:
+        // We can just ignore the item in that case, it will still be destroyed
         break;
     }
     AERInstanceSetSpriteSpeed(bg, 0);
