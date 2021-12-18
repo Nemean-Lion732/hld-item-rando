@@ -17,8 +17,9 @@
 
 #include "logic.h"
 #include "crate.h"
+#include "options.h"
 
-size_t randomizedIndexes[RAND_MAP_SIZE] = {0};
+static size_t randomizedIndexes[RAND_MAP_SIZE] = {0};
 static const randomItemInfo_t randomItemOrderedMap[RAND_MAP_SIZE] = 
 {
     /*      GEARBITS       */
@@ -236,15 +237,11 @@ static const randomItemInfo_t randomItemOrderedMap[RAND_MAP_SIZE] =
     {.data = {.type = ITEM_WEAPON, .identifier = 2, .room_id = 245}}
 };
 
-size_t takenItemIndexes[RAND_MAP_SIZE];
-size_t takenLocationIndexes[RAND_MAP_SIZE];
-size_t takenCounter = 0;
+static size_t takenItemIndexes[RAND_MAP_SIZE];
+static size_t takenLocationIndexes[RAND_MAP_SIZE];
+static size_t takenCounter = 0;
 
-/*      ----- INTERNAL GLOBALS -----         */
-
-bool randomizer_enabled = false;
-
-/*      ----- INTERNAL FUNCTIONS -----      */
+/* ----- PRIVATE FUNCTIONS ----- */
 
 /*!
  *  @brief Function will abort if the given input map is not ordered
@@ -456,7 +453,7 @@ static void refreshRandomMap(uint64_t seed)
     AERRandGenFree(gen);
 }
 
-/*      ----- PUBLIC FUNCTIONS -----      */
+/* ----- INTERNAL FUNCTIONS ----- */
 
 /*!
  *  @brief Loads item randomization table from save file, or creates a new one
@@ -483,7 +480,7 @@ void logicGameLoadListener()
                 break;
             case AER_FAILED_LOOKUP:
                 AERLogInfo("Did not detect randomized seed");
-                randomizer_enabled = false;
+                options.randomizer_enabled = false;
                 return; // exit if either for loop fails
             default:
                 AERLogErr("Getting Randomizer Seed failed unexpectedly");
@@ -491,7 +488,7 @@ void logicGameLoadListener()
         }
     }
     AERLogInfo("Retrieved seed %llu from save!", seed);
-    randomizer_enabled = true;
+    options.randomizer_enabled = true;
     refreshRandomMap(seed);
     return;
 }
@@ -524,7 +521,7 @@ void checkForNewGame(int32_t newRoomIdx)
 
     // Update map
     refreshRandomMap(seed);
-    randomizer_enabled = true;
+    options.randomizer_enabled = true;
     return;
 }
 

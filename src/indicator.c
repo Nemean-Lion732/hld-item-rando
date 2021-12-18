@@ -10,6 +10,7 @@
 
 #include "logic.h"
 #include "indicator.h"
+#include "options.h"
 
 #define INDICATOR_TIMEOUT 100 // ticks until indicator object is removed
 static int indicatorObjectIdx;
@@ -49,7 +50,7 @@ void registerIndicatorObjects()
  */
 void registerIndicatorObjectListeners()
 {
-    AERObjectAttachAlarmListener(indicatorObjectIdx, 0, indicatorAlarmListener);
+    AERObjectAttachAlarmListener(indicatorObjectIdx, options.alarms.rando_indicator, indicatorAlarmListener);
 }
 
 /*!
@@ -90,6 +91,6 @@ void createPickupIndicator(randomItemInfo_t itemInfo, float x, float y)
     }
     AERInstanceSetSpriteSpeed(bg, 0);
     AERInstanceSetSpriteSpeed(item, 0);
-    AERInstanceSetAlarm(bg, 0, INDICATOR_TIMEOUT);
-    AERInstanceSetAlarm(item, 0, INDICATOR_TIMEOUT);
+    AERInstanceSetAlarm(bg, options.alarms.rando_indicator, INDICATOR_TIMEOUT);
+    AERInstanceSetAlarm(item, options.alarms.rando_indicator, INDICATOR_TIMEOUT);
 }

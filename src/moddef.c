@@ -13,6 +13,7 @@
 #include "crate.h"
 #include "vanilla_handler.h"
 #include "indicator.h"
+#include "options.h"
 
 /* ----- PRIVATE FUNCTIONS ----- */
 
@@ -88,6 +89,14 @@ static void gameSaveListener(int32_t __attribute__((unused))curSlotIdx)
     return;
 }
 
+/*!
+ *  @brief This function is called immediately upon starting the game
+ */
+static void constructor()
+{
+    optionsConstructor();
+}
+
 /* ----- PUBLIC FUNCTIONS ----- */
 
 MOD_EXPORT void DefineMod(AERModDef* def) {
@@ -97,6 +106,6 @@ MOD_EXPORT void DefineMod(AERModDef* def) {
     def->roomStartListener = roomChangeListener;
     def->gameLoadListener = gameLoadListener;
     def->gameSaveListener = gameSaveListener;
-
+    def->constructor = constructor;
     return;
 }

@@ -7,5 +7,38 @@
     "authors": [
         "@PROJECT_AUTHORS_JSON@"
     ],
-    "configuration": []
+    "configuration": [
+        {
+            "key": [
+                "alarm",
+                "GEARBIT"
+            ],
+            "description": "Alarm index to use on vanilla gearbits instances. Can be between 0-11",
+            "default": 0
+        },
+        {
+            "key": [
+                "alarm",
+                "DRIFTERBONES_KEY"
+            ],
+            "description": "Alarm index to use on vanilla key skeleton instances. Can be between 0-11",
+            "default": 0
+        },
+        {
+            "key": [
+                "alarm",
+                "DRIFTERBONES_WEAPON"
+            ],
+            "description": "Alarm index to use on vanilla weapon skeleton instances. Can be between 0-11",
+            "default": 0
+        },
+        {
+            "key": [
+                "alarm",
+                "random_indicator"
+            ],
+            "description": "Alarm index to use on this mods indicator instances. Can be between 0-11",
+            "default": 0
+        }
+    ]
 }

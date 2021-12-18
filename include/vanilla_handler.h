@@ -1,7 +1,7 @@
 #ifndef VANILLA_HANDLER_H
 #define VANILLA_HANDLERS_H
 
-/* ----- PUBLIC FUNCTIONS ----- */
+/* ----- INTERNAL FUNCTIONS ----- */
 
 void registerVanillaObjectListeners();
 void vanillaRoomListener(int32_t newRoomIdx);

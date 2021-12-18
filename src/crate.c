@@ -18,6 +18,7 @@
 #include "logic.h"
 #include "crate.h"
 #include "indicator.h"
+#include "options.h"
 
 #define RAND_ITEM_TAKEN_FLAGS_SIZE      RAND_MAP_SIZE / 32 + 1
 
@@ -336,7 +337,7 @@ void registerCrateSprites()
 void crateSaveListener()
 {
     // do nothing if randomizer is not enabled
-    if (!randomizer_enabled)
+    if (!options.randomizer_enabled)
         return;
         
     // Set the keys flags

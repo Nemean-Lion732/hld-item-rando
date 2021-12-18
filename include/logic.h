@@ -23,11 +23,7 @@ typedef union __attribute__((aligned(4))) randomItemInfo_t
     } data;
 } randomItemInfo_t;
 
-/*      ----- INTERNAL GLOBALS -----         */
-
-extern bool randomizer_enabled;
-
-/* ----- PUBLIC FUNCTIONS ----- */
+/* ----- INTERNAL FUNCTIONS ----- */
 
 void logicGameLoadListener();
 

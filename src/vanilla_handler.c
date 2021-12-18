@@ -12,9 +12,10 @@
 #include "primitive.h"
 #include "logic.h"
 #include "crate.h"
+#include "options.h"
 #include <stdlib.h>
 
-int32_t currentRoom; // copy of the current room variable (kept up to date via a listener)
+static int32_t currentRoom; // copy of the current room variable (kept up to date via a listener)
 
 /*!
  *  @brief Function called upon a gear crate being created to break it.
@@ -32,7 +33,7 @@ static bool gearbitCrateCreatedListener(AEREvent *event, AERInstance *target, AE
         return false;
 
     // Dont do anything if randomizer isnt enabled
-    if(!randomizer_enabled)
+    if(!options.randomizer_enabled)
         return true;
 
     // We cannot destroy this instance using any destroy method, since
@@ -69,37 +70,24 @@ static bool itemCreatedListener(AEREvent *event, AERInstance *target, AERInstanc
         return false;
 
     // Dont set our alarm if the randomizer isnt enabled
-    if(!randomizer_enabled)
+    if(!options.randomizer_enabled)
         return true;
 
     // Set an alarm in the next tick
-    AERInstanceSetAlarm(target, 0, 1);
-    return true;
-}
-
-/*
-static void logItemToText(randomItemInfo_t item)
-{
-    FILE *f;
-    f = fopen("logic.txt", "a");
-    char *typeName = malloc(16);
-    switch (item.data.type)
+    switch (AERInstanceGetObject(target))
     {
-    case ITEM_GEARBIT:
-        typeName = "ITEM_GEARBIT";
+    case AER_OBJECT_GEARBIT:
+        AERInstanceSetAlarm(target, options.alarms.gearbit, 1);
         break;
-    case ITEM_KEY:
-        typeName = "ITEM_KEY";
+    case AER_OBJECT_DRIFTERBONES_KEY:
+        AERInstanceSetAlarm(target, options.alarms.key_skele, 1);
         break;
-    default:
-        typeName = "ITEM_WEAPON";
+    case AER_OBJECT_DRIFTERBONES_WEAPON:
+        AERInstanceSetAlarm(target, options.alarms.weapon_skele, 1);
         break;
     }
-    fprintf(f, "{.data = {.type = %s, .identifier = %u, .room_id: %i}}\n", typeName, item.data.identifier, currentRoom);
-    free(typeName);
-    fclose(f);
+    return true;
 }
-*/
 
 /*!
  *  @brief Function called after a gearbit is fully created. This will destroy it and update the randomizer info
@@ -229,13 +217,13 @@ void registerVanillaObjectListeners()
 {
     // Replacement Listeners
     AERObjectAttachCreateListener(AER_OBJECT_GEARBIT, itemCreatedListener);
-    AERObjectAttachAlarmListener(AER_OBJECT_GEARBIT, 0, gearbitAlarmListener);
+    AERObjectAttachAlarmListener(AER_OBJECT_GEARBIT, options.alarms.gearbit, gearbitAlarmListener);
 
     AERObjectAttachCreateListener(AER_OBJECT_DRIFTERBONES_WEAPON, itemCreatedListener);
-    AERObjectAttachAlarmListener(AER_OBJECT_DRIFTERBONES_WEAPON, 0, weaponAlarmListener);
+    AERObjectAttachAlarmListener(AER_OBJECT_DRIFTERBONES_WEAPON, options.alarms.key_skele, weaponAlarmListener);
 
     AERObjectAttachCreateListener(AER_OBJECT_DRIFTERBONES_KEY, itemCreatedListener);
-    AERObjectAttachAlarmListener(AER_OBJECT_DRIFTERBONES_KEY, 0, keyAlarmListener);
+    AERObjectAttachAlarmListener(AER_OBJECT_DRIFTERBONES_KEY, options.alarms.weapon_skele, keyAlarmListener);
 
     AERObjectAttachCreateListener(AER_OBJECT_GEARBITCRATE, gearbitCrateCreatedListener);
 
