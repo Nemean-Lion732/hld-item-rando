@@ -1,7 +1,7 @@
 #ifndef CRATE_H
 #define CRATE_H
 
-/* ----- PUBLIC FUNCTIONS ----- */
+/* ----- INTERNAL FUNCTIONS ----- */
 
 void registerCrateObjects();
 void registerCrateSprites();

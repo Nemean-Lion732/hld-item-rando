@@ -3,7 +3,6 @@
  *
  *  Contains mod definition and breaks out all hooks in the MRE used in this mod
  */
-#include <stdlib.h>
 #include "aer/object.h"
 #include "aer/log.h"
 #include "aer/room.h"
@@ -13,6 +12,8 @@
 #include "logic.h"
 #include "crate.h"
 #include "vanilla_handler.h"
+#include "indicator.h"
+#include "options.h"
 
 /* ----- PRIVATE FUNCTIONS ----- */
 
@@ -27,6 +28,9 @@ static void registerObjectListeners()
     // Crate
     registerCrateObjectListeners();
 
+    // Indicator
+    registerIndicatorObjectListeners();
+
     return;
 }
 
@@ -37,7 +41,8 @@ static void registerObjects()
 {
     // Register each object
     registerCrateObjects();
-
+    registerIndicatorObjects();
+    
     return;
 }
 
@@ -57,7 +62,7 @@ static void registerSprites()
  *  
  * NOTE: This function is not called upon starting a new game
  */
-static void gameLoadListener(int32_t curSlotIdx)
+static void gameLoadListener(int32_t __attribute__((unused))curSlotIdx)
 {
     logicGameLoadListener();
     crateLoadListener();
@@ -67,9 +72,9 @@ static void gameLoadListener(int32_t curSlotIdx)
 /*!
  *  @brief This function is called upon every room transition
  */
-static void roomChangeListener(int32_t newRoomIdx, int32_t prevRoomIdx)
+static void roomChangeListener(int32_t newRoomIdx, int32_t __attribute__((unused))prevRoomIdx)
 {
-    AERLogInfo("Room Change Event");
+    checkForNewGame(newRoomIdx);
     vanillaRoomListener(newRoomIdx);
 
     return;
@@ -78,11 +83,18 @@ static void roomChangeListener(int32_t newRoomIdx, int32_t prevRoomIdx)
 /*!
  *  @brief This function is called upon each save event
  */
-static void gameSaveListener(int32_t curSlotIdx)
+static void gameSaveListener(int32_t __attribute__((unused))curSlotIdx)
 {
-    AERLogInfo("Save Event");
     crateSaveListener();
     return;
+}
+
+/*!
+ *  @brief This function is called immediately upon starting the game
+ */
+static void constructor()
+{
+    optionsConstructor();
 }
 
 /* ----- PUBLIC FUNCTIONS ----- */
@@ -94,6 +106,6 @@ MOD_EXPORT void DefineMod(AERModDef* def) {
     def->roomStartListener = roomChangeListener;
     def->gameLoadListener = gameLoadListener;
     def->gameSaveListener = gameSaveListener;
-
+    def->constructor = constructor;
     return;
 }

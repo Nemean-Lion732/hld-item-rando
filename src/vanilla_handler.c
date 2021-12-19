@@ -12,9 +12,10 @@
 #include "primitive.h"
 #include "logic.h"
 #include "crate.h"
+#include "options.h"
 #include <stdlib.h>
 
-int32_t currentRoom; // copy of the current room variable (kept up to date via a listener)
+static int32_t currentRoom; // copy of the current room variable (kept up to date via a listener)
 
 /*!
  *  @brief Function called upon a gear crate being created to break it.
@@ -30,6 +31,10 @@ static bool gearbitCrateCreatedListener(AEREvent *event, AERInstance *target, AE
     // handle other listeners
     if (!event->handle(event, target, other))
         return false;
+
+    // Dont do anything if randomizer isnt enabled
+    if(!options.randomizer_enabled)
+        return true;
 
     // We cannot destroy this instance using any destroy method, since
     // this would not cause the gearbit to spawn. This probably isnt the best method
@@ -64,34 +69,25 @@ static bool itemCreatedListener(AEREvent *event, AERInstance *target, AERInstanc
     if (!event->handle(event, target, other))
         return false;
 
-    // Set an alarm in the next tick
-    AERInstanceSetAlarm(target, 0, 1);
-    return true;
-}
+    // Dont set our alarm if the randomizer isnt enabled
+    if(!options.randomizer_enabled)
+        return true;
 
-/*
-static void logItemToText(randomItemInfo_t item)
-{
-    FILE *f;
-    f = fopen("logic.txt", "a");
-    char *typeName = malloc(16);
-    switch (item.data.type)
+    // Set an alarm in the next tick
+    switch (AERInstanceGetObject(target))
     {
-    case ITEM_GEARBIT:
-        typeName = "ITEM_GEARBIT";
+    case AER_OBJECT_GEARBIT:
+        AERInstanceSetAlarm(target, options.alarms.gearbit, 1);
         break;
-    case ITEM_KEY:
-        typeName = "ITEM_KEY";
+    case AER_OBJECT_DRIFTERBONES_KEY:
+        AERInstanceSetAlarm(target, options.alarms.key_skele, 1);
         break;
-    default:
-        typeName = "ITEM_WEAPON";
+    case AER_OBJECT_DRIFTERBONES_WEAPON:
+        AERInstanceSetAlarm(target, options.alarms.weapon_skele, 1);
         break;
     }
-    fprintf(f, "{.data = {.type = %s, .identifier = %u, .room_id: %i}}\n", typeName, item.data.identifier, currentRoom);
-    free(typeName);
-    fclose(f);
+    return true;
 }
-*/
 
 /*!
  *  @brief Function called after a gearbit is fully created. This will destroy it and update the randomizer info
@@ -173,20 +169,6 @@ static bool weaponAlarmListener(AEREvent *event, AERInstance *target, AERInstanc
     if (!event->handle(event, target, other))
         return false;
 
-    // Check here if we need initialize our variables before we spawn in anything
-    if (currentRoom == AER_ROOM_IN_03_TUT_COMBAT)
-    {
-        // Assume the game just started
-        logicGameLoadListener();
-        // We are in the tutorial room. We need the drifter to be able to open the map to equip their items
-        AERInstance* data_obj;
-        if (AERInstanceGetByObject(AER_OBJECT_DATA, false, 1, &data_obj) > 0)
-            // the data instance is valid
-            AERInstanceGetHLDLocal(data_obj, "playerHasMap")->d = 1;
-        else 
-            AERLogErr("Randomizer could not equip map to player in tutorial, player is softlocked!");
-    }
-
     // get the weapon local
     AERLocal* weapon = AERInstanceGetHLDLocal(target, "weapon");
     float x, y;
@@ -235,13 +217,13 @@ void registerVanillaObjectListeners()
 {
     // Replacement Listeners
     AERObjectAttachCreateListener(AER_OBJECT_GEARBIT, itemCreatedListener);
-    AERObjectAttachAlarmListener(AER_OBJECT_GEARBIT, 0, gearbitAlarmListener);
+    AERObjectAttachAlarmListener(AER_OBJECT_GEARBIT, options.alarms.gearbit, gearbitAlarmListener);
 
     AERObjectAttachCreateListener(AER_OBJECT_DRIFTERBONES_WEAPON, itemCreatedListener);
-    AERObjectAttachAlarmListener(AER_OBJECT_DRIFTERBONES_WEAPON, 0, weaponAlarmListener);
+    AERObjectAttachAlarmListener(AER_OBJECT_DRIFTERBONES_WEAPON, options.alarms.key_skele, weaponAlarmListener);
 
     AERObjectAttachCreateListener(AER_OBJECT_DRIFTERBONES_KEY, itemCreatedListener);
-    AERObjectAttachAlarmListener(AER_OBJECT_DRIFTERBONES_KEY, 0, keyAlarmListener);
+    AERObjectAttachAlarmListener(AER_OBJECT_DRIFTERBONES_KEY, options.alarms.weapon_skele, keyAlarmListener);
 
     AERObjectAttachCreateListener(AER_OBJECT_GEARBITCRATE, gearbitCrateCreatedListener);
 

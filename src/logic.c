@@ -8,6 +8,8 @@
 #include "aer/save.h"
 #include "aer/err.h"
 #include "aer/event.h"
+#include "aer/room.h"
+#include "aer/object.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,8 +17,9 @@
 
 #include "logic.h"
 #include "crate.h"
+#include "options.h"
 
-size_t randomizedIndexes[RAND_MAP_SIZE] = {0};
+static size_t randomizedIndexes[RAND_MAP_SIZE] = {0};
 static const randomItemInfo_t randomItemOrderedMap[RAND_MAP_SIZE] = 
 {
     /*      GEARBITS       */
@@ -234,9 +237,11 @@ static const randomItemInfo_t randomItemOrderedMap[RAND_MAP_SIZE] =
     {.data = {.type = ITEM_WEAPON, .identifier = 2, .room_id = 245}}
 };
 
-size_t takenItemIndexes[RAND_MAP_SIZE];
-size_t takenCounter = 0;
-size_t takenLocationIndexes[RAND_MAP_SIZE];
+static size_t takenItemIndexes[RAND_MAP_SIZE];
+static size_t takenLocationIndexes[RAND_MAP_SIZE];
+static size_t takenCounter = 0;
+
+/* ----- PRIVATE FUNCTIONS ----- */
 
 /*!
  *  @brief Function will abort if the given input map is not ordered
@@ -255,50 +260,6 @@ static void ensureMapOrdered()
 
         lastItem = nextItem;
     }
-}
-
-/*!
- *  @brief Gets the item index in the ordered map from the item information
- *
- *  @param[in] item         pointer to a struct containing the item information
- * 
- *  @return the item index for the given item, or -1 if it is not in the map
- */
-int16_t getItemIndex(randomItemInfo_t* item)
-{
-    // Binary search
-    size_t lower = 0;
-    size_t upper = RAND_MAP_SIZE;
-    size_t mid;
-    do {
-        mid = (lower + upper) / 2;
-
-        if (randomItemOrderedMap[mid].raw == item->raw)
-            return mid;
-        else if (randomItemOrderedMap[mid].raw > item->raw)
-            upper = mid;
-        else if (randomItemOrderedMap[mid].raw < item->raw)
-            lower = mid + 1;
-    } while (lower <= upper);
-    // if this exits, that item does not exist in our list
-
-    return -1;
-}
-
-/*!
- *  @brief Returns the new randomized item information from an old item index
- */
-randomItemInfo_t updateRandomItem(int32_t oldItemIdx)
-{
-    // Basic check avoid errors
-    if (oldItemIdx < 0 || oldItemIdx >= RAND_MAP_SIZE)
-    {
-        AERLogErr("Got item with an invalid index (%u)! Aborting...", oldItemIdx);
-        abort();
-    } 
-    
-    int32_t newIndex = randomizedIndexes[oldItemIdx];
-    return randomItemOrderedMap[newIndex];
 }
 
 /*!
@@ -471,59 +432,11 @@ static void assignFromConditions(AERRandGen* gen, bool (*location_condition)(siz
 /*!
  *  @brief Loads item randomization table from save file, or creates a new one
  */
-void logicGameLoadListener()
+static void refreshRandomMap(uint64_t seed)
 {
     // Reset variables
     takenCounter = 0;
-    
     ensureMapOrdered();
-
-    // Try to get Seed from save
-    uint64_t seed;
-
-    // The AERDouble saving method will use a standard printf %f to text file that is base64 encoded
-    // This means that it is not safe to use all 64 bits for saving data
-    // Doubles can store uint32 numbers inside without any loss so we are using that to store larger data
-    // Memory is aligned to 4 byte chunks, meaning that seed32[0] points to the first 4 bytes of seed, seed[1] points to the second 4 bytes
-    uint32_t* seed32 = (uint32_t*)&seed;
-    bool createNewSeed = false;
-    char key[] = "seedX";
-    for (size_t i = 0; i < 2; i++) // interate twice since sizeof(uint64_t)/sizeof(uint32_t) = 2
-    {
-        sprintf(key, "seed%u", i);
-        aererr = AER_TRY;
-        double seed_d = AERSaveGetDouble(key);
-        switch (aererr) {
-            case AER_OK:
-                // Assume we got the correct seed
-                seed32[i] = seed_d;
-                break;
-            case AER_FAILED_LOOKUP:
-                createNewSeed = true;
-                break;
-            case AER_FAILED_PARSE:
-                createNewSeed = true;
-                break;
-            default:
-                AERLogErr("Getting Randomizer Seed failed unexpectedly");
-                abort();
-        }
-    }
-
-    if (createNewSeed)
-    {
-        seed = AERRandUInt();
-        for (size_t i = 0; i < 2; i++)
-        {
-            sprintf(key, "seed%u", i);
-            AERSaveSetDouble(key, seed32[i]);
-        }
-        AERLogInfo("Saved New Seed %lu!", seed);
-    }
-    else 
-    {
-        AERLogInfo("Retrieved Seed %llu from save!", seed);
-    }
 
     AERRandGen* gen = AERRandGenNew(seed);
 
@@ -538,4 +451,120 @@ void logicGameLoadListener()
     assignFromConditions(gen, alwaysTrue, alwaysTrue);
 
     AERRandGenFree(gen);
+}
+
+/* ----- INTERNAL FUNCTIONS ----- */
+
+/*!
+ *  @brief Loads item randomization table from save file, or creates a new one
+ */
+void logicGameLoadListener()
+{
+    // Try to get Seed from save
+    uint64_t seed;
+
+    // The AERDouble saving method will use a standard printf %f to text file that is base64 encoded
+    // This means that it is not safe to use all 64 bits for saving data
+    // Doubles can store uint32 numbers inside without any loss so we are using that to store larger data
+    // Memory is aligned to 4 byte chunks, meaning that seed32[0] points to the first 4 bytes of seed, seed[1] points to the second 4 bytes
+    uint32_t* seed32 = (uint32_t*)&seed;
+    char key[] = "seedX";
+    for (size_t i = 0; i < 2; i++) // interate twice since sizeof(uint64_t)/sizeof(uint32_t) = 2
+    {
+        sprintf(key, "seed%u", i);
+        aererr = AER_TRY;
+        double seed_d = AERSaveGetDouble(key);
+        switch (aererr) {
+            case AER_OK:
+                seed32[i] = seed_d;
+                break;
+            case AER_FAILED_LOOKUP:
+                AERLogInfo("Did not detect randomized seed");
+                options.randomizer_enabled = false;
+                return; // exit if either for loop fails
+            default:
+                AERLogErr("Getting Randomizer Seed failed unexpectedly");
+                abort();
+        }
+    }
+    AERLogInfo("Retrieved seed %llu from save!", seed);
+    options.randomizer_enabled = true;
+    refreshRandomMap(seed);
+    return;
+}
+
+/*!
+ *  @brief Function to check if a new game was created
+ */
+void checkForNewGame(int32_t newRoomIdx)
+{
+    // Check first tutorial room
+    if (newRoomIdx != AER_ROOM_IN_01_BROKENSHALLOWS)
+        return;
+
+    // Do an additional check that the player does have any weapons
+    if (AERInstanceGetByObject(AER_OBJECT_SECONDARY, false, 0, NULL) != 0)
+        return;
+
+    // This is only called upon starting a new game
+    uint64_t seed = AERRandUInt();
+
+    // Save new seed
+    char key[] = "seedX";
+    uint32_t* seed32 = (uint32_t*)&seed;
+    for (size_t i = 0; i < 2; i++)
+    {
+        sprintf(key, "seed%u", i);
+        AERSaveSetDouble(key, seed32[i]);
+    }
+    AERLogInfo("Saved New Seed %llu!", seed);
+
+    // Update map
+    refreshRandomMap(seed);
+    options.randomizer_enabled = true;
+    return;
+}
+
+/*!
+ *  @brief Gets the item index in the ordered map from the item information
+ *
+ *  @param[in] item         pointer to a struct containing the item information
+ * 
+ *  @return the item index for the given item, or -1 if it is not in the map
+ */
+int16_t getItemIndex(randomItemInfo_t* item)
+{
+    // Binary search
+    size_t lower = 0;
+    size_t upper = RAND_MAP_SIZE;
+    size_t mid;
+    do {
+        mid = (lower + upper) / 2;
+
+        if (randomItemOrderedMap[mid].raw == item->raw)
+            return mid;
+        else if (randomItemOrderedMap[mid].raw > item->raw)
+            upper = mid;
+        else if (randomItemOrderedMap[mid].raw < item->raw)
+            lower = mid + 1;
+    } while (lower <= upper);
+    // if this exits, that item does not exist in our list
+
+    return -1;
+}
+
+/*!
+ *  @brief Returns the new randomized item information from an old item index
+ */
+randomItemInfo_t updateRandomItem(int32_t oldItemIdx)
+{
+    // Basic check avoid errors
+    if (oldItemIdx < 0 || oldItemIdx >= RAND_MAP_SIZE)
+    {
+        AERLogErr("Got item with an invalid index (%u)! Aborting...", oldItemIdx);
+        abort();
+    } 
+    
+    int32_t newIndex = randomizedIndexes[oldItemIdx];
+    return randomItemOrderedMap[newIndex];
 }
