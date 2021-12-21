@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 
 # Define project.
 project(         "itemrando" # Mod name (required)
-    VERSION      "0.3.0" # Mod version (required)
+    VERSION      "0.3.1" # Mod version (required)
     DESCRIPTION  "" # Mod description (optional)
     HOMEPAGE_URL "" # Mod homepage (optional)
     LANGUAGES C
