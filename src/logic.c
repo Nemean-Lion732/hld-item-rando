@@ -522,6 +522,17 @@ void checkForNewGame(int32_t newRoomIdx)
     // Update map
     refreshRandomMap(seed);
     options.randomizer_enabled = true;
+
+    // Give the player access to their inventory
+    AERInstance* data_obj;
+    if (AERInstanceGetByObject(AER_OBJECT_DATA, false, 1, &data_obj) > 0)
+        // the data instance is valid
+        AERInstanceGetHLDLocal(data_obj, "playerHasMap")->d = 1;
+    else 
+    {
+        AERLogErr("Randomizer could not equip map to player in tutorial, player is softlocked!");
+        abort();
+    }
     return;
 }
 
