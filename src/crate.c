@@ -100,6 +100,8 @@ static void deleteWeapon(size_t weaponNum)
         if (AERInstanceGetHLDLocal(weaponArray[i], "type")->d == weaponNum)
             AERInstanceDestroy(weaponArray[i]);
     }
+    
+    free(weaponArray);
 }
 
 /*!
